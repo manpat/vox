@@ -12,6 +12,9 @@ build: $(OBJ)
 	@echo "-- Linking --"
 	@$(GCC) $(OBJ) $(LFLAGS) -obuild
 
+main.cpp: app.h
+	@touch main.cpp
+
 %.o: %.cpp %.h
 	@echo "-- Generating $@ --"
 	@$(GCC) $(SFLAGS) -c $< -o $@

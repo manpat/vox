@@ -1,56 +1,24 @@
 #include "common.h"
 #include "input.h"
+#include "app.h"
 
-std::map<s32,s32> Input::keyStates;
-std::map<s32,s32> Input::mouseStates;
-std::map<s32, s32> Input::controllerStates;
+std::map<s32,u8> Input::keyStates;
+std::map<s32,u8> Input::mouseStates;
 vec2 Input::mouseDelta = vec2{0.f};
-
-Input::MappedCode Input::mappings[MappingName::Count] = {
-	// Keyboard, Mouse, Controller
-	{SDLK_RETURN, -1, Input::JoyButtonA},			// Select
-	{SDLK_ESCAPE, -1, Input::JoyButtonB},			// Cancel
-	{SDLK_w, -1, -1},								// Forward
-	{SDLK_s, -1, -1},								// Backward
-	{SDLK_a, -1, -1},								// Left
-	{SDLK_d, -1, -1},								// Right
-	{SDLK_LSHIFT, -1, Input::JoyButtonRB},			// Boost
-	{SDLK_SPACE, -1, Input::JoyButtonA},			// Jump
-	{SDLK_e, SDL_BUTTON_LEFT, Input::JoyButtonX}	// Interact
-};
-
-SDL_Joystick* Input::controller;
-s32 Input::controllerIndex = -1;
-f32 Input::LXAxis = 0.0f;
-f32 Input::LYAxis = 0.0f;
-f32 Input::RXAxis = 0.0f;
-f32 Input::RYAxis = 0.0f;
-
 bool Input::doCapture = true;
 
-Input::Input(){
-	// App::GetSingleton()->RegisterSDLHook(&EventHook);
-	// SDL_Init(SDL_INIT_JOYSTICK);
-
-	// std::cout << ("Joysticks found: " + std::to_string(SDL_NumJoysticks()) + "\n");
-
-	// for (int i = 0; i < SDL_NumJoysticks(); ++i) {
-	// 	controller = SDL_JoystickOpen(i);
-	// 	if (controller) {
-	// 		controllerIndex = i;
-	// 		break;
-	// 	}
-	// }
-	// std::cout << (controller) ? "Joystick " + std::to_string(controllerIndex) + " connected\n" : "Joystick unable to connect\n";
-}
-
-Input::~Input(){
-	// if (controller) {
-	// 	SDL_JoystickClose(controller);
-	// }
-
-	// App::GetSingleton()->RemoveSDLHook(&EventHook);
-}
+Input::MappedCode Input::mappings[MappingName::Count] = {
+	// Keyboard, Mouse
+	{SDLK_RETURN, -1},			// Select
+	{SDLK_ESCAPE, -1},			// Cancel
+	{SDLK_w, -1},				// Forward
+	{SDLK_s, -1},				// Backward
+	{SDLK_a, -1},				// Left
+	{SDLK_d, -1},				// Right
+	{SDLK_LSHIFT, -1},			// Boost
+	{SDLK_SPACE, -1},			// Jump
+	{SDLK_e, SDL_BUTTON_LEFT}	// Interact
+};
 
 /*
 
@@ -65,61 +33,6 @@ Input::~Input(){
 
 
 */
-void Input::EventHook(const SDL_Event& e){
-	switch(e.type){
-	case SDL_KEYUP:
-		// Save state and inform of change
-		keyStates[e.key.keysym.sym] = Input::Up | Input::ChangedThisFrameFlag;
-		break;
-
-	case SDL_KEYDOWN:
-		// Ignore repeats
-		if(e.key.repeat == 0)
-			// Save state and inform of change
-			keyStates[e.key.keysym.sym] = Input::Down | Input::ChangedThisFrameFlag;
-		break;
-
-	case SDL_MOUSEBUTTONUP:
-		// Save state and inform of change
-		mouseStates[e.button.button] = Input::Up | Input::ChangedThisFrameFlag;
-		break;
-
-	case SDL_MOUSEBUTTONDOWN:
-		// Save state and inform of change
-		mouseStates[e.button.button] = Input::Down | Input::ChangedThisFrameFlag;
-		doCapture = true;
-		break;
-
-	// case SDL_JOYAXISMOTION:
-	// 	switch (e.jaxis.axis) {
-	// 	case JoyAxisLX:
-	// 		LXAxis = (2 * ((f32)e.jaxis.value + 32768)) / 65535 - 1;
-	// 		break;
-
-	// 	case JoyAxisLY:
-	// 		LYAxis = (2 * ((f32)e.jaxis.value + 32768)) / 65535 - 1;
-	// 		break;
-
-	// 	case JoyAxisRX:
-	// 		RXAxis = (2 * ((f32)e.jaxis.value + 32768)) / 65535 - 1;
-	// 		break;
-
-	// 	case JoyAxisRY:
-	// 		RYAxis = (2 * ((f32)e.jaxis.value + 32768)) / 65535 - 1;
-	// 		break;
-
-	// 	}
-	// 	break;
-
-	case SDL_JOYBUTTONUP:
-		controllerStates[e.jbutton.button] = Input::Up | Input::ChangedThisFrameFlag;
-		break;
-
-	case SDL_JOYBUTTONDOWN:
-		controllerStates[e.jbutton.button] = Input::Down | Input::ChangedThisFrameFlag;
-		break;
-	}
-}
 
 void Input::Update(){
 	// Get mouse delta from center, convert to range (-1, 1),
@@ -128,23 +41,21 @@ void Input::Update(){
 	// The reason that this isn't being handled with SDLs event queue
 	//	is the mouse warping
 
-	// if(App::GetSingleton()->IsInFocus() && doCapture){
-		
+	if(/*App::GetSingleton()->IsInFocus() && */doCapture){
 		s32 mx, my;
 		SDL_GetMouseState(&mx, &my);
 
-		// auto ww = App::GetSingleton()->GetWindowWidth();
-		// auto wh = App::GetSingleton()->GetWindowHeight();
+		auto ww = App::WindowWidth;
+		auto wh = App::WindowHeight;
 
-		// ww &= ~1;
-		// wh &= ~1;
+		ww &= ~1;
+		wh &= ~1;
 		
-		// mouseDelta.x = mx / static_cast<f32>(ww) * 2.f - 1.f;
-		// mouseDelta.y =-my / static_cast<f32>(wh) * 2.f + 1.f;
+		mouseDelta.x = mx / static_cast<f32>(ww) * 2.f - 1.f;
+		mouseDelta.y =-my / static_cast<f32>(wh) * 2.f + 1.f;
 		
-		// TODO: GET WINDOW
-		// SDL_WarpMouseInWindow(App::GetSingleton()->sdlWindow, ww/2, wh/2);
-	// }
+		// SDL_WarpMouseInWindow(App::GetSingleton()->window, ww/2, wh/2);
+	}
 }
 
 void Input::EndFrame(){
@@ -156,6 +67,16 @@ void Input::EndFrame(){
 		kv.second &= ~Input::ChangedThisFrameFlag;
 	}
 }
+
+void Input::NotifyKeyStateChange(s32 key, bool state) {
+	keyStates[key] = (state? Input::Down:Input::Up) | Input::ChangedThisFrameFlag;
+}
+
+void Input::NotifyButtonStateChange(s32 button, bool state) {
+	mouseStates[button] = (state? Input::Down:Input::Up) | Input::ChangedThisFrameFlag;
+	if(state) doCapture = true;
+}
+
 
 /*
 
@@ -213,17 +134,6 @@ bool Input::GetKeyUp(s32 k){
 	return findin(keyStates, k) == (Input::ChangedThisFrameFlag|Input::Up);
 }
 
-bool Input::GetControllerButton(s32 k) {
-	return findin(controllerStates, k) & 1;
-}
-
-bool Input::GetControllerButtonDown(s32 k) {
-	return findin(controllerStates, k) == (Input::ChangedThisFrameFlag | Input::Down);
-}
-
-bool Input::GetControllerButtonUp(s32 k) {
-	return findin(controllerStates, k) == (Input::ChangedThisFrameFlag | Input::Up);
-}
 
 bool Input::GetMapped(s32 k) {
 	assert(k < Input::Count && k >= 0);
@@ -234,9 +144,6 @@ bool Input::GetMapped(s32 k) {
 		return true;
 	}
 	if (map.mouseCode > 0 && GetButton(map.mouseCode)) {
-		return true;
-	}
-	if (map.controllerCode > 0 && GetControllerButton(map.controllerCode)) {
 		return true;
 	}
 	return false;
@@ -253,9 +160,6 @@ bool Input::GetMappedDown(s32 k) {
 	if (map.mouseCode > 0 && GetButtonDown(map.mouseCode)) {
 		return true;
 	}
-	if (map.controllerCode > 0 && GetControllerButtonDown(map.controllerCode)) {
-		return true;
-	}
 	return false;
 }
 
@@ -268,9 +172,6 @@ bool Input::GetMappedUp(s32 k) {
 		return true;
 	}
 	if (map.mouseCode > 0 && GetButtonUp(map.mouseCode)) {
-		return true;
-	}
-	if (map.controllerCode > 0 && GetControllerButtonUp(map.controllerCode)) {
 		return true;
 	}
 	return false;
