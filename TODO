@@ -1,0 +1,63 @@
+Figure out what the game is
+	Ship building?
+	Base building?
+
+	Resources?
+		Fuel?
+		Power?
+			Solar - requires lots of space
+			Nuclear - Can explode
+		Air?
+			Hard to pull off well
+
+	"Beam me up scotty"
+
+Render system
+	Needs to render voxels
+
+	Deferred rendering?
+		If so, needs way to manage framebuffers and rendering to them
+
+		Means we can have a fucktonne of point lights relatively cheaply
+
+	Text rendering
+	Particles?
+
+	How to manage buffer objects?
+
+	HUD
+		Aim helper - highlight hovered block somehow
+
+Rewrite a bunch of physics stuff
+	Generate colliders for voxels
+
+Computers?
+	Need text input/rendering
+	interpreter
+		What style?
+		High level? Lua
+		Low level? ASM
+			Kinda cool but restrictive in what computers can do wrt ease
+
+	Ideas
+		(holo) Displays
+		Bleep bloop
+		Flashy lights
+
+	What do they do? How do they interact with env?
+		Control ship systems
+			thrust, shields, pew guns, "beam me up scotty"
+			air locks/doors
+			"Punch it chewie"
+			monitor ship stuff
+			make cool holo ui stuff
+
+Multiplayer?
+	Hard but super cool
+
+	How do synchronise things
+		Object transforms
+		Voxel updates
+
+	Requires prediction for high-ish latency connections
+		i.e. most connections

@@ -57,13 +57,19 @@ void App::Run() {
 			}
 		}
 
-		Input::Update();
+		Input::Update(window);
 
 		if(Input::GetKeyDown(SDLK_ESCAPE))
 			running = false;
 
+		// Toggle snapping mouse to center
+		if(Input::GetKeyDown(SDLK_F2))
+			Input::doCapture ^= true;
+
 		glClearColor(0.1,0.1,0.1,0);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+		// TODO: Cool rendering things
 		
 		SDL_GL_SwapWindow(window);
 		SDL_Delay(1);

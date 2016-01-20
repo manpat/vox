@@ -5,6 +5,7 @@
 std::map<s32,u8> Input::keyStates;
 std::map<s32,u8> Input::mouseStates;
 vec2 Input::mouseDelta = vec2{0.f};
+vec2 Input::mousePos = vec2{0.f};
 bool Input::doCapture = true;
 
 Input::MappedCode Input::mappings[MappingName::Count] = {
@@ -34,27 +35,35 @@ Input::MappedCode Input::mappings[MappingName::Count] = {
 
 */
 
-void Input::Update(){
+void Input::Update(SDL_Window* window){
 	// Get mouse delta from center, convert to range (-1, 1),
 	//	move mouse back to center
 
 	// The reason that this isn't being handled with SDLs event queue
 	//	is the mouse warping
 
-	if(/*App::GetSingleton()->IsInFocus() && */doCapture){
-		s32 mx, my;
-		SDL_GetMouseState(&mx, &my);
+	s32 mx, my;
+	SDL_GetMouseState(&mx, &my);
 
-		auto ww = App::WindowWidth;
-		auto wh = App::WindowHeight;
+	u32 ww = App::WindowWidth;
+	u32 wh = App::WindowHeight;
 
-		ww &= ~1;
-		wh &= ~1;
-		
+	ww &= ~1;
+	wh &= ~1;
+
+	if(doCapture){	
 		mouseDelta.x = mx / static_cast<f32>(ww) * 2.f - 1.f;
 		mouseDelta.y =-my / static_cast<f32>(wh) * 2.f + 1.f;
+
+		mousePos = vec2{0.f};
 		
-		// SDL_WarpMouseInWindow(App::GetSingleton()->window, ww/2, wh/2);
+		SDL_WarpMouseInWindow(window, ww/2, wh/2);
+	}else{
+		mousePos.x = mx / static_cast<f32>(ww) * 2.f - 1.f;
+		mousePos.y =-my / static_cast<f32>(wh) * 2.f + 1.f;
+
+		// Not sure if mouseDelta is useful when not capturing mouse
+		mouseDelta = vec2{0.f};
 	}
 }
 

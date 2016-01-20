@@ -7,6 +7,9 @@
 // TODO: Text input
 // TODO: Scroll wheel input
 
+// Required for mouse warping
+struct SDL_Window;
+
 class Input {
 public:
 	enum MappingName {
@@ -47,6 +50,7 @@ public:
 
 	static std::map<s32, u8> keyStates;
 	static std::map<s32, u8> mouseStates;
+	static vec2 mousePos;
 	static vec2 mouseDelta;
 	static MappedCode mappings[MappingName::Count];
 
@@ -79,7 +83,7 @@ public:
 	static bool GetMappedUp(s32 k);
 
 	// Update methods
-	static void Update();
+	static void Update(SDL_Window*);
 	static void EndFrame();
 
 	static void NotifyKeyStateChange(s32 key, bool state);
