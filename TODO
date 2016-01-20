@@ -1,16 +1,26 @@
 Figure out what the game is
-	Ship building?
-	Base building?
+	Ship building
+	Base building
 
 	Resources?
 		Fuel?
 		Power?
 			Solar - requires lots of space
 			Nuclear - Can explode
+		Materials for building?
 		Air?
 			Hard to pull off well
 
 	"Beam me up scotty"
+
+	Team vs team
+		Would need to be balanced such that using computers is viable
+			Too much pressure (e.g. time limits, fast path to mass destruction) means
+			time spent on computers looses value
+
+		Teams spawn in separate sections of large map, unknown to each other
+		Require warp drives or something to traverse map
+			High cost warp drives make computers more viable
 
 Render system
 	Needs to render voxels
@@ -36,6 +46,7 @@ Computers?
 	interpreter
 		What style?
 		High level? Lua
+			More accessible. Probably better given time constraints
 		Low level? ASM
 			Kinda cool but restrictive in what computers can do wrt ease
 
@@ -43,6 +54,7 @@ Computers?
 		(holo) Displays
 		Bleep bloop
 		Flashy lights
+		Touch screens
 
 	What do they do? How do they interact with env?
 		Control ship systems
@@ -56,6 +68,7 @@ Multiplayer?
 	Hard but super cool
 
 	How do synchronise things
+		Serialization
 		Object transforms
 		Voxel updates
 
