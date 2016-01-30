@@ -3,6 +3,7 @@
 
 static Log shaderLog{"Shader"};
 
+Shader::Shader() : id{0}, filename{} {}
 Shader::Shader(const string& f) : id{0}, filename{f} {}
 
 Shader::~Shader() {
@@ -11,6 +12,11 @@ Shader::~Shader() {
 		id = 0;
 	}
 }
+
+Shader::operator bool() const {
+	return id != 0 && filename.size() > 0;
+}
+
 
 
 void Shader::Compile() {

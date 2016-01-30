@@ -2,39 +2,49 @@
 #define VOXELCHUNK_H
 
 #include "common.h"
-#include "stb_voxel_render.h"
+#include "physics.h"
 
 struct ShaderProgram;
+struct ChunkManager;
+struct Block;
 
 struct VoxelChunk {
-	static u32 elementBO;
-	static u32 elementBufferSize;
+	ChunkManager* manager;
+	RigidBody* rigidbody;
+	Collider* collider;
 
-	u8* vertexBuildBuffer;
-	u8* faceBuildBuffer;
-	u8* blockData;
-	stbvox_rgb* colorData;
+	Block** blocks;
+
+	u8* geometryData;
+	u8* rotationData;
+	u8* occlusionData;
 	
 	u32 vertexBO, faceBO, faceTex;
 	u32 width, height, depth;
 	u32 numQuads;
-	bool dirty;
+	bool voxelsDirty;
+	bool blocksDirty;
 
 	mat4 modelMatrix;
 
-	stbvox_mesh_maker mm;
-
-	VoxelChunk(u32, u32, u32);
+	VoxelChunk(ChunkManager*, u32, u32, u32);
 	~VoxelChunk();
 
-	static void LengthenElementBuffer(u32 least);
-
 	void GenerateMesh();
-	void Render(ShaderProgram&);
+	void UploadMesh();
+	void UpdateVoxelData();
+	void UpdateBlocks();
 
-	void SetBlock(u32,u32,u32, u8);
-	void SetColor(u32,u32,u32, u8,u8,u8);
-	u8 GetBlock(u32,u32,u32);
+	void Update();
+	void Render(ShaderProgram*);
+	void PostRender();
+
+	Block* CreateBlock(u32,u32,u32, u16);
+	void DestroyBlock(u32,u32,u32);
+	Block* GetBlock(u32,u32,u32);
+
+	void SetVoxel(u32,u32,u32, u8);
+	u8 GetVoxel(u32,u32,u32);
 };
 
 #endif

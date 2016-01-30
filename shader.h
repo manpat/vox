@@ -8,9 +8,12 @@ struct Shader {
 	u32 id = 0;
 	std::string filename;
 
+	Shader();
 	Shader(const string& fname);
 	~Shader();
 	void Compile();
+
+	operator bool() const;
 };
 
 struct ShaderProgram {

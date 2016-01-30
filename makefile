@@ -1,7 +1,7 @@
-GCC = g++
+GCC = g++-5
 SFLAGS = -I./ -I/usr/local/include/ -I/usr/local/include/bullet/ 
-SFLAGS+= -std=c++11 -Wall -Wextra -Wpedantic -O1 -g
-LFLAGS = `pkg-config --libs bullet` -lSDL2 -lGL -O1 -g
+SFLAGS+= -std=c++14 -Wall -Wextra -Wpedantic -O1 -g
+LFLAGS = `pkg-config --libs bullet` -lSDL2 -lSDL2_ttf -lSDL2_image -lGL -O1 -g
 SRC=$(shell find . -name "*.cpp")
 OBJ=$(SRC:%.cpp=%.o)
 
@@ -14,6 +14,9 @@ build: $(OBJ)
 
 main.cpp: app.h
 	@touch main.cpp
+
+block.cpp: blocks/*.h
+	@touch block.cpp
 
 %.o: %.cpp %.h
 	@echo "-- Generating $@ --"

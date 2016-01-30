@@ -15,6 +15,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #define GL_GLEXT_PROTOTYPES
 #include <SDL2/SDL_opengl.h>
@@ -64,5 +65,6 @@ std::ostream& operator<<(std::ostream& o, const mat3&);
 std::ostream& operator<<(std::ostream& o, const mat4&);
 
 #include "log.h"
+#include "apptime.h"
 
 #endif

@@ -83,7 +83,6 @@ void Input::NotifyKeyStateChange(s32 key, bool state) {
 
 void Input::NotifyButtonStateChange(s32 button, bool state) {
 	mouseStates[button] = (state? Input::Down:Input::Up) | Input::ChangedThisFrameFlag;
-	if(state) doCapture = true;
 }
 
 

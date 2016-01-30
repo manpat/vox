@@ -4,13 +4,13 @@ in uint attr_vertex;
 
 uniform usamplerBuffer facearray;
 // uniform vec3 transform[3];
-uniform vec4 camera_pos;
+// uniform vec4 camera_pos;
 uniform vec3 normal_table[32];
 uniform mat4 model;
-uniform mat4 view_projection;
+uniform mat4 viewProjection;
 
 flat out uvec4  facedata;
-	 // out  vec3  voxelspace_pos;
+	 out  vec3  voxelspace_pos;
 	 out  vec3  vnormal;
 	 // out float  texlerp;
 	 out float  amb_occ;
@@ -30,7 +30,6 @@ void main() {
 	
 	// vec3 voxelspace_pos = offset * transform[0];
 	// vec3 position  = voxelspace_pos + transform[1];
-	// vec3 voxelspace_pos = offset * transform[0];
-	// vec3 position  = voxelspace_pos + transform[1];
-	gl_Position = view_projection * model * vec4(offset,1.0);
+	voxelspace_pos = offset;
+	gl_Position = viewProjection * model * vec4(offset,1.0);
 }

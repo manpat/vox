@@ -1,108 +1,163 @@
+#include "chunkmanager.h"
+#include "quadbuffer.h"
 #include "voxelchunk.h"
+#include "physics.h"
 #include "shader.h"
+#include "block.h"
 
-u32 VoxelChunk::elementBO = 0;
-u32 VoxelChunk::elementBufferSize = 0;
-constexpr u32 bufferSize = 2<<20; // 4MB
+#include "stb_voxel_render.h"
 
 static Log logger{"VoxelChunk"};
 
-VoxelChunk::VoxelChunk(u32 w, u32 h, u32 d) 
-	: width{w}, height{h}, depth{d} {
-	// TODO: Use a heuristic here and resize buffers dynamically
-	vertexBuildBuffer = new u8[4*bufferSize];
-	faceBuildBuffer = new u8[bufferSize];
+VoxelChunk::VoxelChunk(ChunkManager* cm, u32 w, u32 h, u32 d) 
+	: manager{cm}, width{w}, height{h}, depth{d} {
 
-	blockData = new u8[(width+2)*(height+2)*(depth+2)];
-	colorData = new stbvox_rgb[(width+2)*(height+2)*(depth+2)];
+	u64 size = (width+2)*(height+2)*(depth+2);
+	geometryData = new u8[size];
+	rotationData = new u8[size];
+	occlusionData = new u8[size];
 
-	memset(blockData, 0, (width+2)*(height+2)*(depth+2));
-	memset(colorData, 255, (width+2)*(height+2)*(depth+2) * sizeof(stbvox_rgb));
+	blocks = new Block*[width*height*depth];
+	
+	memset(geometryData, 0, size);
+	memset(rotationData, 0, size);
+	memset(occlusionData, 255, size);
+
+	memset(blocks, 0, width*height*depth * sizeof(Block*));
 
 	vertexBO = faceBO = faceTex = 0;
 	numQuads = 0;
-	dirty = true;
-
-	stbvox_init_mesh_maker(&mm);
-	auto vinput = stbvox_get_input_description(&mm);
-	memset(vinput, 0, sizeof(stbvox_input_description));
-
-	static u8 voxelTypes[] { // TODO: A better way
-		STBVOX_MAKE_GEOMETRY(STBVOX_GEOM_empty, 0, 0),
-		STBVOX_MAKE_GEOMETRY(STBVOX_GEOM_solid, 0, 0),
-		STBVOX_MAKE_GEOMETRY(STBVOX_GEOM_slab_lower, 0, 0),
-		STBVOX_MAKE_GEOMETRY(STBVOX_GEOM_floor_slope_north_is_top, 0, 0),
-		STBVOX_MAKE_GEOMETRY(STBVOX_GEOM_floor_slope_north_is_top, 1, 0),
-		STBVOX_MAKE_GEOMETRY(STBVOX_GEOM_floor_slope_north_is_top, 2, 0),
-		STBVOX_MAKE_GEOMETRY(STBVOX_GEOM_floor_slope_north_is_top, 3, 0),
-		STBVOX_MAKE_GEOMETRY(STBVOX_GEOM_crossed_pair, 3, 0),
-	};
-
-	vinput->rgb = colorData;
-	vinput->blocktype = blockData;
-	vinput->block_geometry = voxelTypes;
-
-	stbvox_set_input_stride(&mm, (depth+2)*(height+2), (depth+2));
-	stbvox_set_input_range(&mm, 1, 1, 1, width+1, height+1, depth+1);
-	stbvox_set_default_mesh(&mm, 0);
+	blocksDirty = false;
+	voxelsDirty = true;
 
 	modelMatrix = mat4(1.f);
+
+	btScalar mass = 0.f;
+	btVector3 inertia {0,0,0};
+
+	auto ms = new btDefaultMotionState{btTransform{}};
+
+	RigidBodyInfo bodyInfo{mass, ms, nullptr, inertia};
+	rigidbody = new RigidBody{bodyInfo};
+
+	collider = nullptr;
 }
 
 VoxelChunk::~VoxelChunk() {
-	delete[] vertexBuildBuffer;
-	delete[] faceBuildBuffer;
-	delete[] blockData;
-	delete[] colorData;
+	glDeleteBuffers(1, &vertexBO);
+	glDeleteBuffers(1, &faceBO);
+	glDeleteTextures(1, &faceTex);
+
+	delete[] geometryData;
+	delete[] occlusionData;
+	delete[] rotationData;
+	geometryData = nullptr;
+	rotationData = nullptr;
+	occlusionData = nullptr;
+
+	if(numQuads){
+		Physics::world->removeRigidBody(rigidbody);
+	}
+
+	if(auto tmsh = (btBvhTriangleMeshShape*) collider) {
+		if(auto mi = tmsh->getMeshInterface())
+			delete mi;
+
+		delete tmsh;
+	}
+
+	delete rigidbody->getMotionState();
+	delete rigidbody;
+	rigidbody = nullptr;
+
+	for(u32 i = 0; i < width*depth*height; i++) {
+		if(blocks[i]) {
+			delete blocks[i];
+		}
+	}
+
+	delete[] blocks;
+	blocks = nullptr;
 }
 
-void VoxelChunk::LengthenElementBuffer(u32 minNumQuads) {
-	if(!elementBO) {
-		glGenBuffers(1, &elementBO);
-		elementBufferSize = minNumQuads + 100;
-	}else{
-		while(minNumQuads > elementBufferSize)
-			elementBufferSize <<= 1;
-	}
-
-	u32* elements = new u32[elementBufferSize*6];
-	for(u32 i = 0; i < elementBufferSize; i++) {
-		elements[i*6+0] = i*4+0;
-		elements[i*6+1] = i*4+2;
-		elements[i*6+2] = i*4+1;
-
-		elements[i*6+3] = i*4+0;
-		elements[i*6+4] = i*4+3;
-		elements[i*6+5] = i*4+2;
-	}
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementBufferSize*6*sizeof(u32), elements, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	delete[] elements;
+static btVector3 VoxIntToVert(u32 vert) {
+	vec3 offset;
+	offset.x = vert & 127u;
+	offset.y = (vert >> 7u) & 127u;
+	offset.z = ((vert >> 14u) & 511u) * 0.5f;
+	offset = vec3{offset.x, offset.z, -offset.y};
+	return o2bt(offset);
 }
 
 void VoxelChunk::GenerateMesh() {
-	stbvox_reset_buffers(&mm);
-	stbvox_set_buffer(&mm, 0, 0, vertexBuildBuffer, bufferSize*4);
-	stbvox_set_buffer(&mm, 0, 1, faceBuildBuffer, bufferSize);
-	if(!stbvox_make_mesh(&mm)) {
+	auto mm = &manager->mm;
+
+	auto vinput = stbvox_get_input_description(mm);
+	vinput->blocktype = geometryData;
+	vinput->lighting = occlusionData;
+	vinput->rotate = rotationData;
+
+	stbvox_set_input_stride(mm, (depth+2)*(height+2), (depth+2));
+	stbvox_set_input_range(mm, 1, 1, 1, width+1, height+1, depth+1);
+	stbvox_set_default_mesh(mm, 0);
+
+	stbvox_reset_buffers(mm);
+	stbvox_set_buffer(mm, 0, 0, manager->vertexBuildBuffer, ChunkManager::VertexBufferSize);
+	stbvox_set_buffer(mm, 0, 1, manager->faceBuildBuffer, ChunkManager::FaceBufferSize);
+
+	if(!stbvox_make_mesh(mm)) {
 		// TODO: resize and try again/continue
 		logger << "Mesh generator ran out of room";
 	}
 
-	numQuads = stbvox_get_quad_count(&mm, 0);
+	// If mesh is valid then collider is assumed to exist
+	// so destroy it
+	if(numQuads) {
+		Physics::world->removeRigidBody(rigidbody);
+		delete ((btBvhTriangleMeshShape*) collider)->getMeshInterface();
+		delete collider;
+		collider = nullptr;
+	}
+
+	numQuads = stbvox_get_quad_count(mm, 0);
+
+	// If a mesh was generated, generate a new collider
+	if(numQuads) {
+		auto trimesh = new btTriangleMesh();
+		u32* chunkVerts = (u32*)manager->vertexBuildBuffer;
+		for(u64 i = 0; i < numQuads; i++) {
+			btVector3 vs[] = {
+				VoxIntToVert(chunkVerts[i*4+0]),
+				VoxIntToVert(chunkVerts[i*4+1]),
+				VoxIntToVert(chunkVerts[i*4+2]),
+				VoxIntToVert(chunkVerts[i*4+3]),
+			};
+
+			trimesh->addTriangle(vs[0], vs[1], vs[2]);
+			trimesh->addTriangle(vs[0], vs[2], vs[3]);
+		}
+
+		collider = new btBvhTriangleMeshShape{trimesh, true};
+		collider->setUserPointer(this);
+
+		rigidbody->setCollisionShape(collider);
+		Physics::world->addRigidBody(rigidbody);
+	}
+}
+
+void VoxelChunk::UploadMesh() {
+	if(!numQuads) return;
 
 	if(!vertexBO) glGenBuffers(1, &vertexBO);
 	if(!faceBO) glGenBuffers(1, &faceBO);
 	if(!faceTex) glGenTextures(1, &faceTex);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBO);
-	glBufferData(GL_ARRAY_BUFFER, numQuads*4*sizeof(u32), vertexBuildBuffer, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, numQuads*4*sizeof(u32), manager->vertexBuildBuffer, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glBindBuffer(GL_TEXTURE_BUFFER, faceBO);
-	glBufferData(GL_TEXTURE_BUFFER, numQuads*sizeof(u32), faceBuildBuffer, GL_DYNAMIC_DRAW);
+	glBufferData(GL_TEXTURE_BUFFER, numQuads*sizeof(u32), manager->faceBuildBuffer, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_TEXTURE_BUFFER, 0);
 
 	glBindTexture(GL_TEXTURE_BUFFER, faceTex);
@@ -110,50 +165,154 @@ void VoxelChunk::GenerateMesh() {
 	glBindTexture(GL_TEXTURE_BUFFER, 0);
 }
 
-void VoxelChunk::Render(ShaderProgram& program) {
-	if(dirty) {
+void VoxelChunk::Render(ShaderProgram* program) {
+	if(voxelsDirty) {
 		GenerateMesh();
-		dirty = false;
+		UploadMesh();
+		voxelsDirty = false;
 	}
 
-	if(numQuads >= elementBufferSize) 
-		LengthenElementBuffer(numQuads);
+	if(!numQuads) return;
+
+	QuadElementBuffer::SetNumQuads(numQuads);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBO);
 	glVertexAttribIPointer(0, 1, GL_UNSIGNED_INT, 4, nullptr);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_BUFFER, faceTex);
-	glUniform1i(program.GetUniform("facearray"), 0);
+	glUniform1i(program->GetUniform("facearray"), 0);
 
 	static mat4 coordinateCorrection = glm::rotate<f32>(-PI/2.f, vec3{1,0,0});
-	glUniformMatrix4fv(program.GetUniform("model"), 1, false, 
+	glUniformMatrix4fv(program->GetUniform("model"), 1, false, 
 		glm::value_ptr(modelMatrix * coordinateCorrection));
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBO);
-	glDrawElements(GL_TRIANGLES, numQuads*6, GL_UNSIGNED_INT, nullptr);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	QuadElementBuffer::Draw(numQuads);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindTexture(GL_TEXTURE_BUFFER, 0);
 }
 
-void VoxelChunk::SetBlock(u32 x, u32 y, u32 z, u8 nval) {
-	if(x >= width || y >= height || z >= depth) return;
-	auto idx = 1 + z + (y+1)*(depth+2) + (x+1)*(depth+2)*(height+2);
-	blockData[idx] = nval;
-	dirty = true;
+void VoxelChunk::Update() {
+	// TODO: A way for blocks to set dirty flag
+	UpdateBlocks();
+
+	blocksDirty = true;
+	if(blocksDirty) {
+		UpdateVoxelData();
+		blocksDirty = false;
+	}
+
+	// Update collider transform
+	btTransform worldTrans;
+	worldTrans.setFromOpenGLMatrix(glm::value_ptr(modelMatrix));
+	rigidbody->setCenterOfMassTransform(worldTrans);
 }
 
-void VoxelChunk::SetColor(u32 x, u32 y, u32 z, u8 r, u8 g, u8 b) {
-	if(x >= width || y >= height || z >= depth) return;
-	auto idx = 1 + z + (y+1)*(depth+2) + (x+1)*(depth+2)*(height+2);
-	colorData[idx] = {r,g,b};
-	dirty = true;
+void VoxelChunk::UpdateVoxelData() {
+	for(u32 x = 0; x < width; x++)
+	for(u32 y = 0; y < height; y++)
+	for(u32 z = 0; z < depth; z++) {
+		auto idx = 1 + z + (y+1)*(depth+2) + (x+1)*(depth+2)*(height+2);
+		auto block = blocks[z + y*depth + x*depth*height];
+
+		if(!block) {
+			geometryData[idx] = 0;
+			occlusionData[idx] = 255;
+			continue;
+		}
+
+		auto bi = block->info;
+		occlusionData[idx] = bi->doesOcclude? 0:255;
+		rotationData[idx] = block->orientation;
+
+		if(bi->RequiresIDsForRotations()) {
+			geometryData[idx] = bi->voxelID + block->orientation;
+		}else{
+			geometryData[idx] = bi->voxelID;		
+		}
+	}
+
+	voxelsDirty = true;
 }
 
-u8 VoxelChunk::GetBlock(u32 x, u32 y, u32 z) {
+void VoxelChunk::UpdateBlocks() {
+	for(u32 x = 0; x < width; x++)
+	for(u32 y = 0; y < height; y++)
+	for(u32 z = 0; z < depth; z++) {
+		auto block = blocks[z + y*depth + x*depth*height];
+		if(!block || !block->info->dynamic) continue;
+
+		block->Update();
+	}
+}
+void VoxelChunk::PostRender() {
+	for(u32 x = 0; x < width; x++)
+	for(u32 y = 0; y < height; y++)
+	for(u32 z = 0; z < depth; z++) {
+		auto block = blocks[z + y*depth + x*depth*height];
+		if(!block || !block->info->dynamic) continue;
+
+		block->PostRender();
+	}
+}
+
+Block* VoxelChunk::CreateBlock(u32 x, u32 y, u32 z, u16 id) {
+	if(x >= width || y >= height || z >= depth) return nullptr;
+	if(!id || id-1 >= BlockRegistry::blockInfoCount) return nullptr;
+
+	auto idx = z + y*depth + x*depth*height;
+	auto factory = BlockRegistry::blocks[id-1].factory;
+	if(!factory) throw "Block " + std::to_string(id+1) + " missing factory";
+
+	auto block = factory->Create();
+	blocks[idx] = block;
+	block->orientation = 0;
+	block->x = x;
+	block->y = y;
+	block->z = z;
+	block->chunk = this;
+
+	block->OnPlace();
+
+	blocksDirty = true;
+	return block;
+}
+
+void VoxelChunk::DestroyBlock(u32 x, u32 y, u32 z) {
+	if(x >= width || y >= height || z >= depth) return;
+
+	auto idx = z + y*depth + x*depth*height;
+	auto& block = blocks[idx];
+
+	// TODO: Some of this should really be deferred
+	if(block) {
+		block->OnBreak();
+	}
+
+	delete block;
+	block = nullptr;
+
+	blocksDirty = true;
+}
+
+Block* VoxelChunk::GetBlock(u32 x, u32 y, u32 z) {
+	if(x >= width || y >= height || z >= depth) return nullptr;
+	auto idx = z + y*depth + x*depth*height;
+
+	return blocks[idx];
+}
+
+void VoxelChunk::SetVoxel(u32 x, u32 y, u32 z, u8 nval) {
+	if(x >= width || y >= height || z >= depth) return;
+	auto idx = 1 + z + (y+1)*(depth+2) + (x+1)*(depth+2)*(height+2);
+	geometryData[idx] = nval;
+	occlusionData[idx] = (nval == 0)?255:0;
+	voxelsDirty = true;
+}
+
+u8 VoxelChunk::GetVoxel(u32 x, u32 y, u32 z) {
 	if(x >= width || y >= height || z >= depth) return 0;
 	auto idx = 1 + z + (y+1)*(depth+2) + (x+1)*(depth+2)*(height+2);
-	return blockData[idx];
+	return geometryData[idx];
 }
