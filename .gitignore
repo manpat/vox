@@ -2,3 +2,5 @@ build
 *.o
 out
 *.exe
+*.sublime-project
+*.sublime-workspace
