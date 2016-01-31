@@ -1,8 +1,12 @@
 #include "overlay.h"
 
+void OverlayManager::Add(std::shared_ptr<Overlay> o) {
+	overlays.push_back(o);
+}
+
 void OverlayManager::Update() {
 	for(auto& o: overlays) {
-		o->Update();
+		if(!o->active) o->Update();
 	}
 
 	// Release those that wish death
@@ -18,7 +22,7 @@ void OverlayManager::Update() {
 
 void OverlayManager::Render() {
 	for(auto& o: overlays) {
-		o->Render();
+		if(!o->active) o->Render();
 	}
 }
 

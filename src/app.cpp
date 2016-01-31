@@ -87,7 +87,7 @@ void App::Run() {
 	font.Init("LiberationMono-Regular.ttf");
 	Font::defaultFont = &font;
 
-	{	auto chunk = chunkManager->CreateChunk(30,30,10,vec3{0,2,0});
+	{	auto chunk = chunkManager->CreateChunk(30,30,10,vec3{0,10,0});
 
 		for(u32 y = 0; y < chunk->height; y++)
 		for(u32 x = 0; x < chunk->width; x++)
@@ -104,7 +104,8 @@ void App::Run() {
 	glEnableVertexAttribArray(1);
 
 	auto uicamera = std::make_shared<Camera>(4.f/3.f, 10.f, -1.f, 1.f, false);
-	overlayManager->overlays.push_back(std::make_shared<PlayerInfoOverlay>(player, uicamera));
+	Camera::uiCamera = uicamera;
+	overlayManager->Add(std::make_shared<PlayerInfoOverlay>(player, uicamera));
 
 	while(running) {
 		Input::EndFrame();

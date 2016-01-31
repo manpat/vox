@@ -7,6 +7,7 @@ struct ShaderProgram;
 
 struct Camera {
 	static std::weak_ptr<Camera> mainCamera;
+	static std::weak_ptr<Camera> uiCamera;
 
 	// Set in UpdateMatrices
 	mat4 projectionMatrix;

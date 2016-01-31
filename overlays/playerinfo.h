@@ -25,13 +25,13 @@ struct PlayerInfoOverlay : Overlay {
 		static f32 fps = 60.f;
 		fps = (fps*29.f + 1.f/Time::dt)/30.f;
 
-		static const char* PlayerRotStrings[] = {
+		static const char* playerRotStrings[] = {
 			"North (-Z)", "East (+X)", "South (+Z)", "West (-X)"
 		};
 
 		std::ostringstream ss;
 		ss << (s32)fps << '\n';
-		ss << PlayerRotStrings[player->blockRot] << '\n';
+		ss << playerRotStrings[player->blockRot] << '\n';
 		ss << ((!player->blockType)?"interact":BlockRegistry::blocks[player->blockType-1].name) << '\n';
 
 		timeText.SetText(ss.str());

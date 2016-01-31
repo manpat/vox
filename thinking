@@ -1,0 +1,88 @@
+-> = has reference to
+: = Derived from
+
+Block OnInteract should recieve info about interacter
+	Should enable synchronisation over network
+
+ComputerBlock -> Computer
+Computer -> ComputerBlock // to change tint/textures or some shit
+Computer -> ComputerGUI
+Computer -> vm state and port states
+
+
+Need GUI helpers to make shit not terrible
+	buttons n' stuff
+	info about gui things
+	centralised way to get focus
+
+ComputerGUI : Overlay
+
+Computer : ThingWithPorts
+
+ThingWithPortsManager {
+	ThingWithPorts[] things;
+}
+
+ThingWithPorts {
+	type // id into ThingsWithPortsRegistry
+
+	PortIn[] inputs
+	PortOut[] outputs
+}
+
+// How ports work kinda depends on what style language the computers will have
+
+// Input ports can accept input from one source
+// Output ports can output to many input ports
+
+Port {
+	enum Type {
+		boolean, // Controlling lights n' shit; button input
+		number, // Maybe split into int/float? Maybe not? Controlling thrusters
+		string,
+
+		composite/bus, // Bundles of data; port forwarders, connecting monitors/computers
+		// Just pointer to thing? {Address/Port, Value} packets?
+	}
+
+	string name
+}
+
+PortIn : Port {
+	Connection to PortOut
+
+	Value GetValue() // pull value from connection or use default (sticky?)
+}
+
+PortOut : Port {
+	Connection to PortIn []
+
+	void SetValue(Value)
+}
+
+
+Possible things that can have ports
+===================================
+
+Computers
+Memory/Storage/Disk Drives - I don't know why yet
+Monitors
+Pilot chair
+Holo stuff
+
+Lights
+Buttons
+Doors/Airlocks
+
+Scanners
+	Radar kinda
+Motion sensors
+
+Reactors
+Power storage
+
+Thrusters
+"Beam me up scotty"
+"Punch it chewie"
+Shield generator
+Weapon stuff

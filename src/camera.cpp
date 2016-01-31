@@ -2,6 +2,7 @@
 #include "shader.h"
 
 std::weak_ptr<Camera> Camera::mainCamera{};
+std::weak_ptr<Camera> Camera::uiCamera{};
 
 Camera::Camera(f32 a, f32 fs, f32 n, f32 f, bool p) 
 	: aspect{a}, fov{fs}, near{n}, far{f}, isPerspective{p} {

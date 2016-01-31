@@ -1,7 +1,7 @@
 GCC = g++-5
 SFLAGS = -Iinclude -I./ -I/usr/local/include/ -I/usr/local/include/bullet/ 
-SFLAGS+= -std=c++14 -Wall -Wextra -Wpedantic -O1 -g
-LFLAGS = `pkg-config --libs bullet` -lSDL2 -lSDL2_ttf -lSDL2_image -lGL -O1 -g
+SFLAGS+= -std=c++14 -Wall -Wextra -O1 -g
+LFLAGS = `pkg-config --libs bullet` -lSDL2 -lSDL2_image -lGL -O1 -g
 SRC=$(shell find src -name "*.cpp")
 OBJ=$(SRC:%.cpp=%.o)
 
@@ -32,5 +32,5 @@ run: parallelbuild
 
 clean:
 	@echo "-- Cleaning --"
-	@rm -f *.o
+	@rm -f $(shell find . -name "*.o")
 	

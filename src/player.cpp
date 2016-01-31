@@ -71,9 +71,9 @@ void Player::Update() {
 	}else{
 		quat rot;
 		rot = glm::angleAxis<f32>(-camRot.y, 0,1,0);
-		inputDir = rot * inputDir;
 
 		camera->rotation = rot * glm::angleAxis<f32>(-camRot.x, 1,0,0);
+		inputDir = rot * inputDir;
 
 		auto vel = vec3(inputDir);
 		vel = vel * 6.f * (1.f + Input::GetMapped(Input::Boost)*3.f);

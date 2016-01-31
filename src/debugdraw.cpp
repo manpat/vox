@@ -26,7 +26,7 @@ void Debug::Init(OverlayManager* om) {
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
 	if(om)
-		om->overlays.push_back(std::make_shared<DebugDrawOverlay>(Camera::mainCamera.lock()));
+		om->Add(std::make_shared<DebugDrawOverlay>(Camera::mainCamera.lock()));
 }
 
 void Debug::Render(Camera* c) {
