@@ -35,7 +35,7 @@ struct PlayerInfoOverlay : Overlay {
 		ss << ((!player->blockType)?"interact":BlockRegistry::blocks[player->blockType-1].name) << '\n';
 
 		timeText.SetText(ss.str());
-		timeText.modelMatrix = glm::translate<f32>(-camera->aspect*10.f, 10.f, 0);
+		timeText.modelMatrix = glm::translate<f32>(vec3{-camera->aspect*10.f, 10.f, 0});
 		timeText.Render();
 	}
 };

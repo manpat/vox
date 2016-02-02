@@ -62,17 +62,17 @@ void Player::Update() {
 
 	if(noclip){
 		quat rot;
-		rot = glm::angleAxis<f32>(-camRot.y, 0,1,0);
-		rot = rot * glm::angleAxis<f32>(-camRot.x, 1,0,0);
+		rot = glm::angleAxis(-camRot.y, vec3{0,1,0});
+		rot = rot * glm::angleAxis(-camRot.x, vec3{1,0,0});
 
 		inputDir = rot * inputDir;
 		camera->position += vec3(inputDir) * Time::dt * 6.f * (1.f + Input::GetMapped(Input::Boost)*3.f);
 		camera->rotation = rot;
 	}else{
 		quat rot;
-		rot = glm::angleAxis<f32>(-camRot.y, 0,1,0);
+		rot = glm::angleAxis(-camRot.y, vec3{0,1,0});
 
-		camera->rotation = rot * glm::angleAxis<f32>(-camRot.x, 1,0,0);
+		camera->rotation = rot * glm::angleAxis(-camRot.x, vec3{1,0,0});
 		inputDir = rot * inputDir;
 
 		auto vel = vec3(inputDir);

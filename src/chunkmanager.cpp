@@ -135,7 +135,7 @@ std::shared_ptr<VoxelChunk> ChunkManager::CreateChunk(u32 w, u32 h, u32 d, vec3 
 	position.y += nchunk->height/-2.f -1;
 	position.z += nchunk->depth/2.f +1;
 
-	nchunk->modelMatrix = glm::translate<f32>(position);
+	nchunk->modelMatrix = glm::translate(position);
 	return nchunk;
 }
 

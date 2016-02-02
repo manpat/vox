@@ -16,7 +16,7 @@ BlockRegisterer<TextBlock> textBlock;
 
 
 mat4 Block::GetOrientationMat() {
-	return glm::rotate<f32>(-PI/2.f*orientation, 0,1,0);
+	return glm::rotate<f32>(-PI/2.f*orientation, vec3{0,1,0});
 }
 
 vec3 Block::GetRelativeCenter() {

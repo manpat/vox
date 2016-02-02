@@ -151,7 +151,7 @@ void TextMesh::SetText(const std::string& text) {
 		size = vec2{0.f};
 	}
 
-	modelMatrix = glm::scale<f32>(.5,.5,.5) * glm::translate<f32>(-size.x/2.f, size.y/2.f, 0);
+	modelMatrix = glm::scale(vec3{.5,.5,.5}) * glm::translate(vec3{-size.x/2.f, size.y/2.f, 0});
 }
 
 void TextMesh::Render() {
