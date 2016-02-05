@@ -3,6 +3,7 @@
 
 #include <sstream>
 
+#include "gui.h"
 #include "block.h"
 #include "common.h"
 #include "player.h"
@@ -14,12 +15,13 @@ struct PlayerInfoOverlay : Overlay {
 	std::shared_ptr<Player> player;
 	TextMesh timeText;
 
-	PlayerInfoOverlay(std::shared_ptr<Player> p, std::shared_ptr<Camera> c) : Overlay{c}, player{p}, timeText{Font::defaultFont} {}
+	PlayerInfoOverlay(std::shared_ptr<Player> p) : player{p}, timeText{Font::defaultFont} {}
 	void Render() override {
 		auto textProgram = ShaderRegistry::GetProgram("text");
 		textProgram->Use();
 
-		camera->SetUniforms(textProgram.get());
+		auto gui = GUI::Get();
+		gui->camera->SetUniforms(textProgram.get());
 
 		glUniform4f(textProgram->GetUniform("color"), 0.5,0.7,0.8, 1);
 		static f32 fps = 60.f;
@@ -35,7 +37,9 @@ struct PlayerInfoOverlay : Overlay {
 		ss << ((!player->blockType)?"interact":BlockRegistry::blocks[player->blockType-1].name) << '\n';
 
 		timeText.SetText(ss.str());
-		timeText.modelMatrix = glm::translate<f32>(vec3{-camera->aspect*10.f, 10.f, 0});
+		// timeText.modelMatrix = glm::translate<f32>(vec3{-gui->aspect*10.f, 10.f, 0});
+		f32 scale = 2.f/timeText.size.x;
+		timeText.modelMatrix = glm::translate(vec3{0.f, 12.f, 0} * vec3{gui->cellSize,0}) * glm::scale(vec3{scale, scale, scale});
 		timeText.Render();
 	}
 };

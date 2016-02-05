@@ -2,18 +2,29 @@
 #include "shader.h"
 
 std::weak_ptr<Camera> Camera::mainCamera{};
-std::weak_ptr<Camera> Camera::uiCamera{};
 
-Camera::Camera(f32 a, f32 fs, f32 n, f32 f, bool p) 
-	: aspect{a}, fov{fs}, near{n}, far{f}, isPerspective{p} {
+Camera::Camera(f32 a, f32 fs, f32 n, f32 f, ProjectionType p) 
+	: aspect{a}, fov{fs}, near{n}, far{f}, projectionType{p} {
+	UpdateMatrices();
+}
+
+Camera::Camera(const mat4& m) : projectionMatrix{m}, projectionType{Camera::Custom} {
 	UpdateMatrices();
 }
 
 void Camera::UpdateMatrices() {
-	if(isPerspective)
+	switch(projectionType) {
+	case Camera::Perspective:
 		projectionMatrix = glm::perspective<f32>(fov, aspect, near, far);
-	else
+		break;
+
+	case Camera::Orthographic:
 		projectionMatrix = glm::ortho<f32>(-aspect*orthoSize, aspect*orthoSize, -orthoSize, orthoSize, near, far);
+		break;
+
+	case Camera::Custom:
+	default: break;
+	}
 
 	viewMatrix = glm::translate(glm::mat4_cast(glm::conjugate(rotation)), -position);
 

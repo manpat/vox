@@ -4,7 +4,6 @@
 #include "common.h"
 
 struct Overlay;
-struct Camera;
 
 struct OverlayManager {
 	std::vector<std::shared_ptr<Overlay>> overlays;
@@ -16,13 +15,10 @@ struct OverlayManager {
 };
 
 struct Overlay {
-	std::shared_ptr<Camera> camera;
-
 	s32 priority = 0;
 	bool wishesDeath = false;
 	bool active = true;
 
-	Overlay(std::shared_ptr<Camera> c) : camera{c} {}
 	virtual ~Overlay() {}
 	virtual void Update() {};
 	virtual void Render() {};

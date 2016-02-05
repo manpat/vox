@@ -1,6 +1,6 @@
 #include "common.h"
 #include "input.h"
-#include "app.h"
+#include "gui.h"
 
 std::map<s32,u8> Input::keyStates;
 std::map<s32,u8> Input::mouseStates;
@@ -31,8 +31,6 @@ Input::MappedCode Input::mappings[MappingName::Count] = {
 	88        88 8b       d8 8b       d8 8888[      `"Y8ba,
 	88        88 "8a,   ,a8" "8a,   ,a8" 88`"Yba,  aa    ]8I
 	88        88  `"YbbdP"'   `"YbbdP"'  88   `Y8a `"YbbdP"'
-
-
 */
 
 void Input::Update(SDL_Window* window){
@@ -45,8 +43,10 @@ void Input::Update(SDL_Window* window){
 	s32 mx, my;
 	SDL_GetMouseState(&mx, &my);
 
-	u32 ww = App::WindowWidth;
-	u32 wh = App::WindowHeight;
+	auto gui = GUI::Get();
+
+	u32 ww = gui->screenWidth;
+	u32 wh = gui->screenHeight;
 
 	ww &= ~1;
 	wh &= ~1;

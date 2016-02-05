@@ -6,7 +6,7 @@ void OverlayManager::Add(std::shared_ptr<Overlay> o) {
 
 void OverlayManager::Update() {
 	for(auto& o: overlays) {
-		if(!o->active) o->Update();
+		if(o->active) o->Update();
 	}
 
 	// Release those that wish death
@@ -22,7 +22,7 @@ void OverlayManager::Update() {
 
 void OverlayManager::Render() {
 	for(auto& o: overlays) {
-		if(!o->active) o->Render();
+		if(o->active) o->Render();
 	}
 }
 

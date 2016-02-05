@@ -1,4 +1,5 @@
 #include "app.h"
+#include "gui.h"
 #include "block.h"
 #include "input.h"
 #include "shader.h"
@@ -70,6 +71,11 @@ void App::Init() {
 
 	Input::doCapture = true;
 	Physics::Init();
+
+	gui = GUI::Get();
+	gui->screenWidth = WindowWidth;
+	gui->screenHeight = WindowHeight;
+	gui->Init();
 	
 	camera = std::make_shared<Camera>();
 	Camera::mainCamera = camera;
@@ -82,7 +88,51 @@ void App::Init() {
 	player = std::make_shared<Player>(camera);
 }
 
+#include "gui/element.h"
+
 void App::Run() {
+	struct TestEl : Element {
+		vec3 color;
+
+		TestEl(vec3 c) : color{c} {}
+
+		void Render() override {
+			auto m = GetMetrics();
+
+			auto bl = vec3{m->bottomLeft, 0};
+			auto tr = vec3{m->topRight, 0};
+			auto br = vec3{tr.x, bl.y, 0};
+			auto tl = vec3{bl.x, tr.y, 0};
+
+			Debug::Line(bl,tl, color);
+			Debug::Line(bl,br, color);
+			Debug::Line(tr,tl, color);
+			Debug::Line(tr,br, color);
+
+			Element::Render();
+		}
+	};
+
+	auto rootEl = std::make_shared<TestEl>(vec3{1});
+	auto childEl = std::make_shared<TestEl>(vec3{0,1,0});
+	rootEl->self = rootEl;
+	childEl->self = childEl;
+
+	rootEl->AddChild(childEl);
+
+	rootEl->SetOrigin(0, 0);
+	rootEl->position = vec2{6,6};
+	rootEl->offset = vec2{0,0};
+	rootEl->proportions = vec2{10,10};
+	rootEl->active = true;
+
+	childEl->SetOrigin(-1, 1);
+	childEl->position = vec2{0,10};
+	childEl->proportions = vec2{6,6};
+	childEl->active = true;
+
+	gui->AddElement(rootEl);
+
 	Font font;
 	font.Init("LiberationMono-Regular.ttf");
 	Font::defaultFont = &font;
@@ -103,9 +153,7 @@ void App::Run() {
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
-	auto uicamera = std::make_shared<Camera>(4.f/3.f, 10.f, -1.f, 1.f, false);
-	Camera::uiCamera = uicamera;
-	overlayManager->Add(std::make_shared<PlayerInfoOverlay>(player, uicamera));
+	overlayManager->Add(std::make_shared<PlayerInfoOverlay>(player));
 
 	while(running) {
 		Input::EndFrame();
@@ -143,6 +191,7 @@ void App::Run() {
 		player->Update();
 		chunkManager->Update();
 		overlayManager->Update();
+		gui->Update();
 
 		Physics::world->stepSimulation((btScalar)Time::dt, 10);
 
@@ -151,6 +200,7 @@ void App::Run() {
 
 		chunkManager->Render(camera.get());
 		overlayManager->Render();
+		gui->Render();
 
 		SDL_GL_SwapWindow(window);
 		SDL_Delay(1);

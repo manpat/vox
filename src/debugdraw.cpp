@@ -10,9 +10,10 @@ std::shared_ptr<ShaderProgram> Debug::debugProgram {nullptr};
 u32 Debug::vbo = 0;
 
 struct DebugDrawOverlay : Overlay {
-	DebugDrawOverlay(std::shared_ptr<Camera> c) : Overlay{c} { priority = 0xffffff; } 
+	DebugDrawOverlay() { priority = 0xffffff; } 
 	void Render() override {
-		Debug::Render(camera.get());
+		if(auto cam = Camera::mainCamera.lock())
+			Debug::Render(cam.get());
 	}
 };
 
@@ -26,7 +27,7 @@ void Debug::Init(OverlayManager* om) {
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
 	if(om)
-		om->Add(std::make_shared<DebugDrawOverlay>(Camera::mainCamera.lock()));
+		om->Add(std::make_shared<DebugDrawOverlay>());
 }
 
 void Debug::Render(Camera* c) {

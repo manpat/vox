@@ -1,0 +1,19 @@
+Client -> Server
+----------------
+
+NewPosition
+	XYZ -float? fixed-width?
+
+
+
+
+Server -> Client
+----------------
+
+UpdatePosition
+	Entity id
+	XYZ
+
+ChunkData
+	block ids
+	metadata for dynamic blocks?

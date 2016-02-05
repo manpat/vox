@@ -9,6 +9,7 @@ struct OverlayManager;
 struct ChunkManager;
 struct Camera;
 struct Player;
+struct GUI;
 
 struct App {
 	static constexpr u32 WindowWidth = 800;
@@ -21,6 +22,7 @@ struct App {
 	std::shared_ptr<Camera> camera;
 	std::unique_ptr<ChunkManager> chunkManager;
 	std::unique_ptr<OverlayManager> overlayManager;
+	std::shared_ptr<GUI> gui;
 
 	bool running = true;
 

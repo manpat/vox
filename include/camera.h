@@ -6,8 +6,11 @@
 struct ShaderProgram;
 
 struct Camera {
+	enum ProjectionType {
+		Perspective, Orthographic, Custom
+	};
+
 	static std::weak_ptr<Camera> mainCamera;
-	static std::weak_ptr<Camera> uiCamera;
 
 	// Set in UpdateMatrices
 	mat4 projectionMatrix;
@@ -23,9 +26,10 @@ struct Camera {
 	f32 aspect;
 	union { f32 fov; f32 orthoSize; };
 	f32 near, far;
-	bool isPerspective;
+	ProjectionType projectionType;
 
-	Camera(f32 a = 4.f/3.f, f32 fs = PI/3.f, f32 n = 0.01f, f32 f = 1000.f, bool p = true);
+	Camera(f32 a = 4.f/3.f, f32 fs = PI/3.f, f32 n = 0.01f, f32 f = 1000.f, ProjectionType p = Perspective);
+	Camera(const mat4&);
 
 	void UpdateMatrices();
 	void SetUniforms(ShaderProgram*);
