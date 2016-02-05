@@ -3,16 +3,13 @@
 
 static Log logger{"Element"};
 
-auto Element::GetMetrics() -> CalculatedMetrics* {
+auto Element::GetMetrics() -> CalculatedElementMetrics* {
 	if(dirty) {
-		auto ox = (origin&12) >> 2;
-		auto oy = origin&3;
+		auto gui = GUI::Get();
+		auto p = parent.lock();
 
 		vec2 absSize;
 		vec2 absPos;
-
-		auto gui = GUI::Get();
-		auto p = parent.lock();
 
 		if(p) {
 			auto pm = p->GetMetrics();
@@ -21,16 +18,21 @@ auto Element::GetMetrics() -> CalculatedMetrics* {
 
 			absSize = proportions * cellSize + size * gui->cellSize;
 			absPos = position * cellSize + offset * gui->cellSize + pm->bottomLeft;
+			calculatedMetrics.depth = depth + pm->depth + 0.1f;
 
 		}else{ // Root node
 			absSize = (proportions + size) * gui->cellSize;
 			absPos = (position + offset) * gui->cellSize;
+			calculatedMetrics.depth = depth;
 		}
+
+		auto ox = (origin&12) >> 2;
+		auto oy = origin&3;
 
 		if(ox == 1) absPos.x -= absSize.x / 2.f;
 		else if(ox == 2) absPos.x -= absSize.x;
 
-		// This means the internal origin will be bottomLeft
+		// This means the internal origin will be bottom left
 		if(oy == 1) absPos.y -= absSize.y / 2.f;
 		else if(oy == 2) absPos.y -= absSize.y;
 

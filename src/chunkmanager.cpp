@@ -1,10 +1,9 @@
 #include "shaderregistry.h"
+#include "texturehelpers.h"
 #include "chunkmanager.h"
 #include "voxelchunk.h"
 #include "camera.h"
 #include "block.h"
-
-#include <SDL2/SDL_image.h>
 
 static Log logger{"ChunkManager"};
 
@@ -14,51 +13,8 @@ ChunkManager::ChunkManager() {
 
 	PopulateVoxelInfo();
 
-	constexpr u32 TextureSize = 16;
-
-	auto InitAtlas = [](std::string fname) {
-		auto surf = IMG_Load(fname.data());
-		if(!surf) {
-			logger << "Failed to load image " << fname;
-			return;
-		}
-
-		bool hasAlpha = (surf->format->BytesPerPixel == 4);
-		if(!hasAlpha && (surf->format->BytesPerPixel != 3)) {
-			logger << "Invalid image format: " << surf->format->BytesPerPixel;
-			SDL_FreeSurface(surf);
-			return;
-		}
-
-		static u8 tempBuffer[TextureSize*TextureSize*4]; // Assume alpha
-
-		u32 numTilesPerRow = surf->w/TextureSize;
-		u32 bytesPerTileRow = surf->pitch/numTilesPerRow;
-
-		glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, 
-			TextureSize, TextureSize, numTilesPerRow*surf->h/TextureSize,  0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-
-		for(u32 ty = 0; ty < surf->h/TextureSize; ty++)
-		for(u32 tx = 0; tx < numTilesPerRow; tx++) {
-			for(u32 y = 0; y < TextureSize; y++)
-			for(u32 x = 0; x < bytesPerTileRow; x++) {
-				u32 tidx = x + y * bytesPerTileRow;
-				u32 sidx = x + tx*bytesPerTileRow + (y + ty*TextureSize) * surf->pitch;
-				tempBuffer[tidx] = ((u8*)surf->pixels)[sidx];
-			}
-
-			u32 idx = tx + ty * numTilesPerRow;
-			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, idx, TextureSize, TextureSize, 1,
-				hasAlpha?GL_RGBA:GL_RGB, GL_UNSIGNED_BYTE, tempBuffer);
-		}
-
-		SDL_FreeSurface(surf);
-	};
-
-	glGenTextures(1, &textureArray);
+	textureArray = CreateTextureArrayFromAtlas("textures/atlas.png", 16, 16);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray);
-
-	InitAtlas("textures/atlas.png");
 	logger << "Initialised texture atlas";
 
 	// TODO: Figure out why this hangs sometimes

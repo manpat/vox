@@ -15,6 +15,7 @@
 #include "shaderregistry.h"
 
 #include "overlays/playerinfo.h"
+#include "gui/panel.h"
 
 #include <SDL2/SDL_image.h>
 #include <chrono>
@@ -65,6 +66,7 @@ void App::Init() {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	ShaderRegistry::CreateProgram("ui", "shaders/ui.vs", "shaders/ui.fs");
 	ShaderRegistry::CreateProgram("text", "shaders/text.vs", "shaders/text.fs");
 	ShaderRegistry::CreateProgram("voxel", "shaders/voxel.vs", "shaders/voxel.fs");
 	// ShaderRegistry::CreateProgram("voxel", "shaders/voxel.vs", "shaders/oldvoxel.fs");
@@ -129,6 +131,31 @@ void App::Run() {
 				Debug::Line(vec3{x,bl.y,z}, vec3{x,tr.y,z}, gridCol);
 		}
 	};
+
+	auto toolBar = gui->CreateElement<PanelElement>();
+	toolBar->SetOrigin(0, -1);
+	toolBar->position = vec2{6,0};
+	toolBar->proportions = vec2{10,1};
+
+	auto testPanel = gui->CreateElement<PanelElement>();
+	testPanel->position = vec2{1,1};
+	testPanel->proportions = vec2{10,10};
+	testPanel->depth = 1;
+	testPanel->active = false;
+
+	std::vector<std::shared_ptr<PanelElement>> childPanels {};
+	for(u32 i = 0; i < 5; i++) {
+		auto childPanel = testPanel->CreateChild<PanelElement>();
+		childPanel->SetOrigin(1, 1); // Top right
+		childPanel->position = vec2{11, 11 - i};
+		childPanel->proportions = vec2{5, .75};
+
+		childPanels.push_back(childPanel);
+	}
+
+	auto childPanel = testPanel->CreateChild<PanelElement>();
+	childPanel->position = vec2{1,1};
+	childPanel->proportions = vec2{4,10};
 
 	auto screenEl = gui->CreateElement<TestEl>(vec3{0,0,1});
 	screenEl->position = vec2{0,0};
@@ -233,6 +260,9 @@ void App::Run() {
 		if(Input::GetKeyDown(SDLK_n)) {
 			chunkManager->CreateChunk(11,11,11,camera->position + camera->forward*4.f, true);
 		}
+
+		if(Input::GetKeyDown(SDLK_t))
+			testPanel->active ^= true;
 
 		player->Update();
 		chunkManager->Update();
