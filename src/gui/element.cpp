@@ -45,17 +45,35 @@ auto Element::GetMetrics() -> CalculatedMetrics* {
 
 Element::Element() {
 	dirty = true;
+	active = true;
+	origin = 0; // bottom left
 }
 
-void Element::Render() {
+void Element::ConcreteUpdate() {
+	Update();
 	for(auto& el: children) {
-		el->Render();
+		el->ConcreteUpdate();
+	}
+}
+
+void Element::ConcreteRender() {
+	Render();
+	for(auto& el: children) {
+		el->ConcreteRender();
+	}
+}
+
+void Element::FlagDirty() {
+	dirty = true;
+	for(auto& el: children) {
+		el->FlagDirty();
 	}
 }
 
 void Element::AddChild(std::shared_ptr<Element> el) {
 	children.emplace_back(el);
 	el->parent = self;
+	el->FlagDirty();
 }
 
 void Element::SetOrigin(s8 x, s8 y) {

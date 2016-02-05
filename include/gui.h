@@ -25,7 +25,17 @@ struct GUI {
 	void Update();
 	void Render();
 
-	void AddElement(std::weak_ptr<Element>);
+	template<class T, class... A>
+	std::shared_ptr<T> CreateElement(A&&... a);
+
+	void AddElement(std::shared_ptr<Element>);
 };
+
+template<class T, class... A>
+std::shared_ptr<T> GUI::CreateElement(A&&... a) {
+	auto el = std::make_shared<T>(std::forward<A>(a)...);
+	AddElement(el);
+	return el;
+}
 
 #endif

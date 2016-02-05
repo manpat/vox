@@ -33,41 +33,18 @@ void GUI::Update() {
 	
 	for(auto& wel: elements) {
 		auto el = wel.lock();
-		if(el->active) el->Update();
-
-		el->GetMetrics(); // Temp
+		if(el->active) el->ConcreteUpdate();
 	}
 }
-
-#include "debugdraw.h"
 
 void GUI::Render() {
-	// TEMP
-	vec3 bl {0};
-	vec3 tr {gridSize*cellSize, 0};
-	vec3 br {tr.x, bl.y, 0};
-	vec3 tl {bl.x, tr.y, 0};
-	vec3 gridCol {.3};
-	f32 z = -.1f;
-
-	for(f32 y = 0; y < tr.y; y+=cellSize.y)
-		Debug::Line(vec3{0,y,z}, vec3{12.f,y,z}, gridCol);
-
-	for(f32 x = 0; x < tr.x; x+=cellSize.x)
-		Debug::Line(vec3{x,0,z}, vec3{x,12.f*cellSize.y,z}, gridCol);
-
-	Debug::Line(bl,tl, vec3{0,0,1});
-	Debug::Line(bl,br, vec3{0,0,1});
-	Debug::Line(tr,tl, vec3{0,0,1});
-	Debug::Line(tr,br, vec3{0,0,1});
-	// TEMP
-
 	for(auto& wel: elements) {
 		if(auto el = wel.lock())
-			if(el->active) el->Render();
+			if(el->active) el->ConcreteRender();
 	}
 }
 
-void GUI::AddElement(std::weak_ptr<Element> e) {
+void GUI::AddElement(std::shared_ptr<Element> e) {
 	elements.emplace_back(e);
+	e->self = e;
 }

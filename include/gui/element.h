@@ -29,11 +29,27 @@ struct Element {
 	CalculatedMetrics* GetMetrics();
 
 	Element();
-	virtual void Update() {};
-	virtual void Render();
+
+	template<class T, class... A>
+	std::shared_ptr<T> CreateChild(A&&... a);
 
 	void AddChild(std::shared_ptr<Element>);
+	void FlagDirty();
 	void SetOrigin(s8 x, s8 y);
+
+	void ConcreteRender();
+	void ConcreteUpdate();
+
+	virtual void Update() {};
+	virtual void Render() {};
 };
+
+template<class T, class... A>
+std::shared_ptr<T> Element::CreateChild(A&&... a) {
+	auto el = std::make_shared<T>(std::forward<A>(a)...);
+	el->self = el;
+	AddChild(el);
+	return el;
+}
 
 #endif
