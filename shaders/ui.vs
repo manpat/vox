@@ -12,7 +12,7 @@ void main() {
 	vec3 vert = vertex;
 
 	if(vert.z < 0)
-		vert.z = -log(-vert.z);
+		vert.z = -log(-vert.z-1);
 	else
 		vert.z = log(max(vert.z, 0) + 1);
 

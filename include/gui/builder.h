@@ -23,7 +23,8 @@ struct GUIBuilder {
 	void Upload();
 
 	void Add(vec2 p, vec2 uv = vec2{0.f});
-	void AddQuad(CalculatedElementMetrics* m);
+	void AddQuad(vec2 bl, vec2 tr, vec2 uv0 = vec2{0.f}, vec2 uv1 = vec2{1.f});
+	void Add9Slice(vec2 bl, vec2 tr, vec2 uv, vec2 size, f32 margin = 2.f, f32 frame = 0.1f);
 	u32 Count();
 };
 

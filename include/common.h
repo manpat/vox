@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <algorithm>
 
+#define GLM_SWIZZLE
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/transform.hpp>

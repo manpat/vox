@@ -42,8 +42,19 @@ struct Element {
 	void ConcreteRender();
 	void ConcreteUpdate();
 
-	virtual void Update() {};
-	virtual void Render() {};
+	std::shared_ptr<Element> TestPoint(vec2);
+
+	virtual void Update() {}
+	virtual void Render() {}
+
+	virtual void OnClick() {}
+	virtual void OnGainFocus() {}
+	virtual void OnLoseFocus() {}
+	virtual void OnMouseEnter() {}
+	virtual void OnMouseLeave() {}
+
+	// Events recieved while focussed
+	virtual void OnTextEntry(const std::string&) {}
 };
 
 template<class T, class... A>

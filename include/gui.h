@@ -15,6 +15,9 @@ struct GUI {
 	std::vector<std::weak_ptr<Element>> elements;
 	std::shared_ptr<Camera> camera;
 
+	std::weak_ptr<Element> selectedElement;
+	std::weak_ptr<Element> hoveredElement;
+
 	u32 screenWidth, screenHeight;
 	f32 aspect;
 
@@ -22,10 +25,16 @@ struct GUI {
 	vec2 gridSize;
 
 	GUIBuilder builder;
+	u32 texture;
 
 	void Init();
 	void Update();
 	void Render();
+
+	std::shared_ptr<Element> GetElementAt(vec2);
+
+	void InjectMouseMove(vec2);
+	void InjectMouseClick(vec2);
 
 	template<class T, class... A>
 	std::shared_ptr<T> CreateElement(A&&... a);

@@ -3,6 +3,7 @@
 
 #include "camera.h"
 #include "quadbuffer.h"
+#include "texturehelpers.h"
 #include "shaderregistry.h"
 
 static Log logger{"GUI"};
@@ -27,6 +28,8 @@ void GUI::Init() {
 	auto proj = glm::ortho<f32>(0.f, absSize.x, 0, absSize.y, -10.f, 10.f);
 	camera = std::make_shared<Camera>(proj);
 
+	texture = CreateTextureFromFile("textures/ui.png");
+
 	builder.Init();
 }
 
@@ -35,6 +38,10 @@ void GUI::Update() {
 	elements.erase(std::remove_if(elements.begin(), end, 
 		[](const auto& p) {return p.expired();}), end);
 	
+	std::sort(elements.begin(), elements.end(), [](auto& a, auto& b) {
+		return a.lock()->depth < b.lock()->depth;
+	});
+
 	builder.Clear();
 
 	for(auto& wel: elements) {
@@ -44,11 +51,19 @@ void GUI::Update() {
 }
 
 void GUI::Render() {
-	// glDisable(GL_DEPTH_TEST);
+	glClear(GL_DEPTH_BUFFER_BIT);
 
 	auto sh = ShaderRegistry::GetProgram("ui");
 	sh->Use();
 	camera->SetUniforms(sh.get());
+
+	if(texture) {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		if(auto u = sh->GetUniform("tex")) {
+			glUniform1i(u, 0);
+		}
+	}
 
 	builder.Upload();
 	glBindBuffer(GL_ARRAY_BUFFER, builder.vbo);
@@ -59,15 +74,54 @@ void GUI::Render() {
 	QuadElementBuffer::Draw(builder.Count()/4);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// glEnable(GL_DEPTH_TEST);
-
 	for(auto& wel: elements) {
 		if(auto el = wel.lock())
 			if(el->active) el->ConcreteRender();
 	}
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void GUI::AddElement(std::shared_ptr<Element> e) {
 	elements.emplace_back(e);
 	e->self = e;
+}
+
+std::shared_ptr<Element> GUI::GetElementAt(vec2 p) {
+	for(auto& we: elements) {
+		auto e = we.lock();
+		if(!e) continue;
+
+		if(auto res = e->TestPoint(p))
+			return res;
+	}
+
+	return nullptr;
+}
+
+void GUI::InjectMouseMove(vec2 p) {
+	auto he = hoveredElement.lock();
+	auto el = GetElementAt(p);
+
+	if(he != el) {
+		if(he) he->OnMouseLeave();
+		if(el) el->OnMouseEnter();
+
+		hoveredElement = el;
+	}
+}
+
+void GUI::InjectMouseClick(vec2 p) {
+	// This could potentially use hoveredElement
+
+	auto se = selectedElement.lock();
+	auto el = GetElementAt(p);
+
+	if(se != el) {
+		if(se) se->OnLoseFocus();
+		if(el) el->OnGainFocus();
+		selectedElement = el;
+	}
+
+	if(el) el->OnClick();
 }

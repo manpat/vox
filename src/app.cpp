@@ -46,7 +46,7 @@ void App::Init() {
 	// TODO: Check if debug context available
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 
-	window = SDL_CreateWindow("VoxPhys", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
+	window = SDL_CreateWindow("Vox", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
 		WindowWidth, WindowHeight, SDL_WINDOW_OPENGL);
 	if(!window) throw "Window create failed";
 
@@ -69,7 +69,6 @@ void App::Init() {
 	ShaderRegistry::CreateProgram("ui", "shaders/ui.vs", "shaders/ui.fs");
 	ShaderRegistry::CreateProgram("text", "shaders/text.vs", "shaders/text.fs");
 	ShaderRegistry::CreateProgram("voxel", "shaders/voxel.vs", "shaders/voxel.fs");
-	// ShaderRegistry::CreateProgram("voxel", "shaders/voxel.vs", "shaders/oldvoxel.fs");
 
 	Input::doCapture = true;
 	Physics::Init();
@@ -90,48 +89,7 @@ void App::Init() {
 	player = std::make_shared<Player>(camera);
 }
 
-#include "gui/element.h"
-
 void App::Run() {
-	struct TestEl : Element {
-		vec3 color;
-		TestEl(vec3 c) : color{c} {}
-
-		void Render() override {
-			auto m = GetMetrics();
-
-			auto bl = vec3{m->bottomLeft, 0};
-			auto tr = vec3{m->topRight, 0};
-			auto br = vec3{tr.x, bl.y, 0};
-			auto tl = vec3{bl.x, tr.y, 0};
-
-			Debug::Line(bl,tl, color);
-			Debug::Line(bl,br, color);
-			Debug::Line(tr,tl, color);
-			Debug::Line(tr,br, color);
-		}
-	};
-
-	struct GridEl : Element {
-		vec3 gridCol;
-		f32 z;
-		GridEl(f32 zz = -.1f, vec3 c = vec3{.3}) : gridCol{c}, z{zz} {}
-		void Render() override {
-			auto m = GetMetrics();
-			auto gui = GUI::Get();
-
-			auto bl = vec3{m->bottomLeft, 0};
-			auto tr = vec3{m->topRight, 0};
-			vec2 cellSize = vec2{tr-bl}/gui->gridSize;
-
-			for(f32 y = bl.y + cellSize.y; y < tr.y; y+=cellSize.y)
-				Debug::Line(vec3{bl.x,y,z}, vec3{tr.x,y,z}, gridCol);
-
-			for(f32 x = bl.x + cellSize.x; x < tr.x; x+=cellSize.x)
-				Debug::Line(vec3{x,bl.y,z}, vec3{x,tr.y,z}, gridCol);
-		}
-	};
-
 	auto toolBar = gui->CreateElement<PanelElement>();
 	toolBar->SetOrigin(0, -1);
 	toolBar->position = vec2{6,0};
@@ -143,12 +101,18 @@ void App::Run() {
 	testPanel->depth = 1;
 	testPanel->active = false;
 
+	auto listPanel = testPanel->CreateChild<PanelElement>();
+	listPanel->SetOrigin(1, 1);
+	listPanel->position = vec2{11, 11};
+	listPanel->proportions = vec2{5,6};
+	listPanel->panelSlice = vec2{0, 16};
+
 	std::vector<std::shared_ptr<PanelElement>> childPanels {};
-	for(u32 i = 0; i < 5; i++) {
-		auto childPanel = testPanel->CreateChild<PanelElement>();
+	for(u32 i = 0; i < 4; i++) {
+		auto childPanel = listPanel->CreateChild<PanelElement>();
 		childPanel->SetOrigin(1, 1); // Top right
-		childPanel->position = vec2{11, 11 - i};
-		childPanel->proportions = vec2{5, .75};
+		childPanel->position = vec2{11, 11 - i * 2.5};
+		childPanel->proportions = vec2{10, 2};
 
 		childPanels.push_back(childPanel);
 	}
@@ -156,55 +120,12 @@ void App::Run() {
 	auto childPanel = testPanel->CreateChild<PanelElement>();
 	childPanel->position = vec2{1,1};
 	childPanel->proportions = vec2{4,10};
+	childPanel->panelSlice = vec2{0, 16};
 
-	auto screenEl = gui->CreateElement<TestEl>(vec3{0,0,1});
-	screenEl->position = vec2{0,0};
-	screenEl->proportions = vec2{12,12};
-
-	auto gridEl = screenEl->CreateChild<GridEl>(-.2f, vec3{.2f});
-	gridEl->position = vec2{0,0};
-	gridEl->proportions = vec2{12,12};
-
-	auto rootEl = gui->CreateElement<TestEl>(vec3{1});
-	auto childEl = rootEl->CreateChild<TestEl>(vec3{1,1,0});
-	auto child2El = rootEl->CreateChild<TestEl>(vec3{0,1,1});
-	auto buttonEl = rootEl->CreateChild<TestEl>(vec3{1,0,0});
-	auto button2El = rootEl->CreateChild<TestEl>(vec3{0,1,0});
-
-	rootEl->SetOrigin(0, 0);
-	rootEl->position = vec2{6,6};
-	rootEl->proportions = vec2{10,10};
-
-	childEl->SetOrigin(-1,1);
-	childEl->position = vec2{1,11};
-	childEl->proportions = vec2{6,6};
-
-	child2El->SetOrigin(1,1);
-	child2El->position = vec2{11,11};
-	child2El->proportions = vec2{3.5,6};
-
-	buttonEl->SetOrigin(1,-1);
-	buttonEl->position = vec2{9, 0.5};
-	buttonEl->proportions = vec2{2,1};
-
-	button2El->SetOrigin(1,-1);
-	button2El->position = vec2{11.5, 0.5};
-	button2El->proportions = vec2{2,1};
-
-	std::vector<std::shared_ptr<TestEl>> longEls {
-		childEl->CreateChild<TestEl>(vec3{1,.5,.5}),
-		childEl->CreateChild<TestEl>(vec3{1,1,.5}),
-		childEl->CreateChild<TestEl>(vec3{.5,1,.5}),
-		childEl->CreateChild<TestEl>(vec3{.5,1,1}),
-		childEl->CreateChild<TestEl>(vec3{.5,.5,1}),
-		childEl->CreateChild<TestEl>(vec3{1,.5,1}),
-	};
-
-	for(u32 i = 0; i < longEls.size(); i++) {
-		longEls[i]->SetOrigin(-1,1);
-		longEls[i]->position = vec2{1, 11 - i*1.5};
-		longEls[i]->proportions = vec2{10, 1};
-	}
+	auto childPanel2 = childPanel->CreateChild<PanelElement>();
+	childPanel2->SetOrigin(0,0);
+	childPanel2->position = vec2{6,6};
+	childPanel2->proportions = vec2{10,4};
 
 	Font font;
 	font.Init("LiberationMono-Regular.ttf");

@@ -65,6 +65,17 @@ void Element::ConcreteRender() {
 	}
 }
 
+std::shared_ptr<Element> Element::TestPoint(vec2 p) {
+	auto m = GetMetrics();
+
+	auto blchk = m->bottomLeft.x > p.x || m->bottomLeft.y > p.y;
+	auto trchk = m->topRight.x < p.x || m->topRight.y < p.y;
+
+	if(blchk || trchk) return nullptr;
+
+	return self.lock();
+}
+
 void Element::FlagDirty() {
 	dirty = true;
 	for(auto& el: children) {
