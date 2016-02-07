@@ -100,28 +100,33 @@ std::shared_ptr<Element> GUI::GetElementAt(vec2 p) {
 }
 
 void GUI::InjectMouseMove(vec2 p) {
+	auto p4 = vec4{p,0,1};
+	p4 = glm::inverse(camera->projectionMatrix) * p4;
+	p = p4.xy();
+
 	auto he = hoveredElement.lock();
 	auto el = GetElementAt(p);
 
 	if(he != el) {
 		if(he) he->OnMouseLeave();
 		if(el) el->OnMouseEnter();
-
-		hoveredElement = el;
 	}
+
+	hoveredElement = el;
 }
 
-void GUI::InjectMouseClick(vec2 p) {
-	// This could potentially use hoveredElement
-
+void GUI::InjectMouseButton(bool down) {
 	auto se = selectedElement.lock();
-	auto el = GetElementAt(p);
+	auto he = hoveredElement.lock();
 
-	if(se != el) {
-		if(se) se->OnLoseFocus();
-		if(el) el->OnGainFocus();
-		selectedElement = el;
+	if(he) {
+		if(down) {
+			he->OnMouseDown();
+		}else{
+			he->OnMouseUp();
+			if(se == he) he->OnClick();
+		}
 	}
 
-	if(el) el->OnClick();
+	selectedElement = he;
 }

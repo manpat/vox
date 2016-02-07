@@ -48,8 +48,10 @@ struct Element {
 	virtual void Render() {}
 
 	virtual void OnClick() {}
-	virtual void OnGainFocus() {}
-	virtual void OnLoseFocus() {}
+	// virtual void OnGainFocus() {}
+	// virtual void OnLoseFocus() {}
+	virtual void OnMouseUp() {}
+	virtual void OnMouseDown() {}
 	virtual void OnMouseEnter() {}
 	virtual void OnMouseLeave() {}
 

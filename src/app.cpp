@@ -16,6 +16,7 @@
 
 #include "overlays/playerinfo.h"
 #include "gui/panel.h"
+#include "gui/button.h"
 
 #include <SDL2/SDL_image.h>
 #include <chrono>
@@ -107,9 +108,9 @@ void App::Run() {
 	listPanel->proportions = vec2{5,6};
 	listPanel->panelSlice = vec2{0, 16};
 
-	std::vector<std::shared_ptr<PanelElement>> childPanels {};
+	std::vector<std::shared_ptr<Element>> childPanels {};
 	for(u32 i = 0; i < 4; i++) {
-		auto childPanel = listPanel->CreateChild<PanelElement>();
+		auto childPanel = listPanel->CreateChild<ButtonElement>();
 		childPanel->SetOrigin(1, 1); // Top right
 		childPanel->position = vec2{11, 11 - i * 2.5};
 		childPanel->proportions = vec2{10, 2};
@@ -184,6 +185,13 @@ void App::Run() {
 
 		if(Input::GetKeyDown(SDLK_t))
 			testPanel->active ^= true;
+
+		gui->InjectMouseMove(Input::mousePos);
+		
+		if(Input::GetButtonDown(Input::MouseLeft))
+			gui->InjectMouseButton(true);
+		else if(Input::GetButtonUp(Input::MouseLeft))
+			gui->InjectMouseButton(false);
 
 		player->Update();
 		chunkManager->Update();

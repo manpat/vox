@@ -34,7 +34,7 @@ struct GUI {
 	std::shared_ptr<Element> GetElementAt(vec2);
 
 	void InjectMouseMove(vec2);
-	void InjectMouseClick(vec2);
+	void InjectMouseButton(bool); // Left button only for now
 
 	template<class T, class... A>
 	std::shared_ptr<T> CreateElement(A&&... a);
