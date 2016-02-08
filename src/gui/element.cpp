@@ -46,6 +46,7 @@ auto Element::GetMetrics() -> CalculatedElementMetrics* {
 }
 
 Element::Element() {
+	interactive = true;
 	dirty = true;
 	active = true;
 	origin = 0; // bottom left
@@ -61,7 +62,7 @@ void Element::ConcreteUpdate() {
 void Element::ConcreteRender() {
 	Render();
 	for(auto& el: children) {
-		el->ConcreteRender();
+		if(el->active) el->ConcreteRender();
 	}
 }
 
@@ -76,7 +77,7 @@ std::shared_ptr<Element> Element::TestPoint(vec2 p) {
 
 	for(auto& c: children) {
 		if(auto res = c->TestPoint(p))
-			return res;
+			if(res->interactive) return res;
 	}
 
 	return self.lock();

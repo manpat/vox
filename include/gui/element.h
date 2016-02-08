@@ -28,6 +28,8 @@ struct Element {
 	u8 active : 1;
 	u8 dirty : 1;
 
+	u8 interactive : 1;
+
 	CalculatedElementMetrics* GetMetrics();
 
 	Element();
@@ -48,12 +50,13 @@ struct Element {
 	virtual void Render() {}
 
 	virtual void OnClick() {}
-	// virtual void OnGainFocus() {}
-	// virtual void OnLoseFocus() {}
 	virtual void OnMouseUp() {}
 	virtual void OnMouseDown() {}
 	virtual void OnMouseEnter() {}
 	virtual void OnMouseLeave() {}
+	
+	// virtual void OnGainFocus() {}
+	// virtual void OnLoseFocus() {}
 
 	// Events recieved while focussed
 	virtual void OnTextEntry(const std::string&) {}

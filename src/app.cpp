@@ -15,7 +15,9 @@
 #include "shaderregistry.h"
 
 #include "overlays/playerinfo.h"
+
 #include "gui/panel.h"
+#include "gui/label.h"
 #include "gui/button.h"
 
 #include <SDL2/SDL_image.h>
@@ -85,12 +87,16 @@ void App::Init() {
 	chunkManager = std::make_unique<ChunkManager>();
 	overlayManager = std::make_unique<OverlayManager>();
 
-	Debug::Init(overlayManager.get());
+	Debug::Init();
 
 	player = std::make_shared<Player>(camera);
 }
 
 void App::Run() {
+	Font font;
+	font.Init("LiberationMono-Regular.ttf");
+	Font::defaultFont = &font;
+
 	auto toolBar = gui->CreateElement<PanelElement>();
 	toolBar->SetOrigin(0, -1);
 	toolBar->position = vec2{6,0};
@@ -110,12 +116,18 @@ void App::Run() {
 
 	std::vector<std::shared_ptr<Element>> childPanels {};
 	for(u32 i = 0; i < 4; i++) {
-		auto childPanel = listPanel->CreateChild<ButtonElement>();
-		childPanel->SetOrigin(1, 1); // Top right
-		childPanel->position = vec2{11, 11 - i * 2.5};
-		childPanel->proportions = vec2{10, 2};
+		auto childButton = listPanel->CreateChild<ButtonElement>();
+		childButton->SetOrigin(1, 1); // Top right
+		childButton->position = vec2{11, 11 - i * 2.5};
+		childButton->proportions = vec2{10, 2};
 
-		childPanels.push_back(childPanel);
+		auto buttonText = childButton->CreateChild<LabelElement>();
+		buttonText->textMesh->SetText("Button " + std::to_string(i));
+		buttonText->SetOrigin(0,0);
+		buttonText->position = vec2{6,6};
+		buttonText->proportions = vec2{6,10};
+
+		childPanels.push_back(childButton);
 	}
 
 	auto childPanel = testPanel->CreateChild<PanelElement>();
@@ -128,9 +140,10 @@ void App::Run() {
 	childPanel2->position = vec2{6,6};
 	childPanel2->proportions = vec2{10,4};
 
-	Font font;
-	font.Init("LiberationMono-Regular.ttf");
-	Font::defaultFont = &font;
+	auto panelText = childPanel2->CreateChild<LabelElement>();
+	panelText->SetOrigin(0,0);
+	panelText->position = vec2{6,6};
+	panelText->proportions = vec2{8,8};
 
 	{	auto chunk = chunkManager->CreateChunk(30,30,10,vec3{0,10,0});
 
@@ -183,8 +196,10 @@ void App::Run() {
 			chunkManager->CreateChunk(11,11,11,camera->position + camera->forward*4.f, true);
 		}
 
-		if(Input::GetKeyDown(SDLK_t))
+		if(Input::GetKeyDown(SDLK_t)){
 			testPanel->active ^= true;
+			Input::doCapture = !testPanel->active;
+		}
 
 		gui->InjectMouseMove(Input::mousePos);
 		
@@ -206,6 +221,8 @@ void App::Run() {
 		chunkManager->Render(camera.get());
 		overlayManager->Render();
 		gui->Render();
+
+		Debug::Render();
 
 		SDL_GL_SwapWindow(window);
 		SDL_Delay(1);

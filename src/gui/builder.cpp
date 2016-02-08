@@ -39,7 +39,7 @@ void GUIBuilder::AddQuad(vec2 bl, vec2 tr, vec2 uv00, vec2 uv11) {
 }
 
 void GUIBuilder::Add9Slice(vec2 bl, vec2 tr, vec2 uv, vec2 size, f32 margin, f32 frame) {
-	vec2 frameSize = vec2{1, GUI::Get()->aspect} * frame;
+	vec2 frameSize = vec2{1, GUI::Get()->aspect} * frame * margin * 0.5f;
 
 	f32 tx[4] = {uv.x, uv.x+margin, uv.x+size.x-margin, uv.x+size.x};
 	f32 ty[4] = {uv.y+size.y, uv.y+size.y-margin, uv.y+margin, uv.y};

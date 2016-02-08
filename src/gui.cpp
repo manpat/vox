@@ -51,7 +51,8 @@ void GUI::Update() {
 }
 
 void GUI::Render() {
-	glClear(GL_DEPTH_BUFFER_BIT);
+	// glClear(GL_DEPTH_BUFFER_BIT);
+	glDisable(GL_DEPTH_TEST);
 
 	auto sh = ShaderRegistry::GetProgram("ui");
 	sh->Use();
@@ -79,6 +80,7 @@ void GUI::Render() {
 			if(el->active) el->ConcreteRender();
 	}
 
+	glEnable(GL_DEPTH_TEST);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
