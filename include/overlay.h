@@ -6,7 +6,9 @@
 struct Overlay;
 
 struct OverlayManager {
-	std::vector<std::shared_ptr<Overlay>> overlays;
+	std::vector<std::weak_ptr<Overlay>> overlays;
+
+	static std::shared_ptr<OverlayManager> Get();
 
 	void Add(std::shared_ptr<Overlay>);
 

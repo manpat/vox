@@ -37,9 +37,8 @@ struct PlayerInfoOverlay : Overlay {
 		ss << ((!player->blockType)?"interact":BlockRegistry::blocks[player->blockType-1].name) << '\n';
 
 		timeText.SetText(ss.str());
-		// timeText.modelMatrix = glm::translate<f32>(vec3{-gui->aspect*10.f, 10.f, 0});
 		f32 scale = 2.f/timeText.size.x;
-		timeText.modelMatrix = glm::translate(vec3{0.f, 12.f, 0} * vec3{gui->cellSize,0}) * glm::scale(vec3{scale, scale, scale});
+		timeText.modelMatrix = glm::translate(vec3{0.f, 12.f, 0} * vec3{gui->cellSize,0}) * glm::scale(vec3{scale});
 		timeText.Render();
 	}
 };

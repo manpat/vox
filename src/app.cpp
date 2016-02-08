@@ -85,7 +85,7 @@ void App::Init() {
 	Camera::mainCamera = camera;
 
 	chunkManager = std::make_unique<ChunkManager>();
-	overlayManager = std::make_unique<OverlayManager>();
+	overlayManager = OverlayManager::Get();
 
 	Debug::Init();
 
@@ -149,7 +149,7 @@ void App::Run() {
 
 		for(u32 y = 0; y < chunk->height; y++)
 		for(u32 x = 0; x < chunk->width; x++)
-			chunk->CreateBlock(x,y,0, 1);
+			chunk->CreateBlock(ivec3{x,y,0}, 1);
 	}
 
 	using std::chrono::duration;
@@ -161,7 +161,8 @@ void App::Run() {
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
-	overlayManager->Add(std::make_shared<PlayerInfoOverlay>(player));
+	auto playerinfo = std::make_shared<PlayerInfoOverlay>(player);
+	overlayManager->Add(playerinfo);
 
 	while(running) {
 		Input::EndFrame();

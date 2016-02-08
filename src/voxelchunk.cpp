@@ -257,20 +257,20 @@ void VoxelChunk::PostRender() {
 	}
 }
 
-Block* VoxelChunk::CreateBlock(u32 x, u32 y, u32 z, u16 id) {
-	if(x >= width || y >= height || z >= depth) return nullptr;
+Block* VoxelChunk::CreateBlock(ivec3 pos, u16 id) {
+	if((u32)pos.x >= width || (u32)pos.y >= height || (u32)pos.z >= depth) return nullptr;
 	if(!id || id-1 >= BlockRegistry::blockInfoCount) return nullptr;
 
-	auto idx = z + y*depth + x*depth*height;
+	auto idx = pos.z + pos.y*depth + pos.x*depth*height;
 	auto factory = BlockRegistry::blocks[id-1].factory;
 	if(!factory) throw "Block " + std::to_string(id+1) + " missing factory";
 
 	auto block = factory->Create();
 	blocks[idx] = block;
 	block->orientation = 0;
-	block->x = x;
-	block->y = y;
-	block->z = z;
+	block->x = pos.x;
+	block->y = pos.y;
+	block->z = pos.z;
 	block->chunk = this;
 
 	block->OnPlace();
@@ -279,10 +279,10 @@ Block* VoxelChunk::CreateBlock(u32 x, u32 y, u32 z, u16 id) {
 	return block;
 }
 
-void VoxelChunk::DestroyBlock(u32 x, u32 y, u32 z) {
-	if(x >= width || y >= height || z >= depth) return;
+void VoxelChunk::DestroyBlock(ivec3 pos) {
+	if((u32)pos.x >= width || (u32)pos.y >= height || (u32)pos.z >= depth) return;
 
-	auto idx = z + y*depth + x*depth*height;
+	auto idx = pos.z + pos.y*depth + pos.x*depth*height;
 	auto& block = blocks[idx];
 
 	// TODO: Some of this should really be deferred
@@ -296,23 +296,24 @@ void VoxelChunk::DestroyBlock(u32 x, u32 y, u32 z) {
 	blocksDirty = true;
 }
 
-Block* VoxelChunk::GetBlock(u32 x, u32 y, u32 z) {
-	if(x >= width || y >= height || z >= depth) return nullptr;
-	auto idx = z + y*depth + x*depth*height;
+Block* VoxelChunk::GetBlock(ivec3 pos) {
+	if((u32)pos.x >= width || (u32)pos.y >= height || (u32)pos.z >= depth) return nullptr;
+	auto idx = pos.z + pos.y*depth + pos.x*depth*height;
 
 	return blocks[idx];
 }
 
-void VoxelChunk::SetVoxel(u32 x, u32 y, u32 z, u8 nval) {
-	if(x >= width || y >= height || z >= depth) return;
-	auto idx = 1 + z + (y+1)*(depth+2) + (x+1)*(depth+2)*(height+2);
-	geometryData[idx] = nval;
-	occlusionData[idx] = (nval == 0)?255:0;
-	voxelsDirty = true;
+ivec3 VoxelChunk::WorldToVoxelSpace(vec3 w) {
+	auto modelSpace = glm::inverse(modelMatrix) * vec4{w, 1};
+	return ivec3 {
+		floor(modelSpace.x-1.f),
+		floor(-modelSpace.z-1.f),
+		floor(modelSpace.y-1.f),
+	};
 }
 
-u8 VoxelChunk::GetVoxel(u32 x, u32 y, u32 z) {
-	if(x >= width || y >= height || z >= depth) return 0;
-	auto idx = 1 + z + (y+1)*(depth+2) + (x+1)*(depth+2)*(height+2);
-	return geometryData[idx];
+vec3 VoxelChunk::VoxelToWorldSpace(ivec3 v) {
+	vec4 modelSpace = vec4{v.x+1, v.z+1, -v.y-1, 1};
+	return vec3{modelMatrix * modelSpace};
 }
+

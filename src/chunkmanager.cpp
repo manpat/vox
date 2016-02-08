@@ -80,11 +80,13 @@ std::shared_ptr<VoxelChunk> ChunkManager::CreateChunk(u32 w, u32 h, u32 d, vec3 
 	chunks.push_back(nchunk);
 
 	if(placeBlock) {
-		u32 cx = nchunk->width/2;
-		u32 cy = nchunk->height/2;
-		u32 cz = nchunk->depth/2;
+		ivec3 pos {
+			nchunk->width/2,
+			nchunk->height/2,
+			nchunk->depth/2,
+		};
 
-		nchunk->CreateBlock(cx,cy,cz, 1);
+		nchunk->CreateBlock(pos, 1);
 	}
 
 	position.x += nchunk->width/-2.f -1;

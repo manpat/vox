@@ -114,23 +114,19 @@ void Player::Update() {
 				if(Input::GetButtonDown(Input::MouseRight) || !blockType)
 					raycastResult.normal = -raycastResult.normal;
 
-				vec4 chpos = vec4{raycastResult.position + raycastResult.normal * 0.1f, 1};
-				auto end = vec3(glm::inverse(chnk->modelMatrix) * chpos);
-
-				auto ex = (u32)floor(end.x-1.f);
-				auto ey = (u32)floor(-end.z-1.f);
-				auto ez = (u32)floor(end.y-1.f);
+				auto chpos = raycastResult.position + raycastResult.normal * 0.1f;
+				auto vxpos = chnk->WorldToVoxelSpace(chpos);
 
 				if(!blockType) {
-					auto blk = chnk->GetBlock(ex,ey,ez);
+					auto blk = chnk->GetBlock(vxpos);
 					if(blk && blk->info->dynamic) {
 						blk->OnInteract();
 					}
 				}else{
 					if(Input::GetButtonDown(Input::MouseRight)){
-						chnk->DestroyBlock(ex,ey,ez);
+						chnk->DestroyBlock(vxpos);
 					}else{
-						auto blk = chnk->CreateBlock(ex,ey,ez, blockType);
+						auto blk = chnk->CreateBlock(vxpos, blockType);
 						if(blk) blk->orientation = blockRot;
 					}
 				}

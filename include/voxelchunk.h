@@ -39,12 +39,12 @@ struct VoxelChunk {
 	void Render(ShaderProgram*);
 	void PostRender();
 
-	Block* CreateBlock(u32,u32,u32, u16);
-	void DestroyBlock(u32,u32,u32);
-	Block* GetBlock(u32,u32,u32);
+	Block* CreateBlock(ivec3, u16);
+	void DestroyBlock(ivec3);
+	Block* GetBlock(ivec3);
 
-	void SetVoxel(u32,u32,u32, u8);
-	u8 GetVoxel(u32,u32,u32);
+	ivec3 WorldToVoxelSpace(vec3);
+	vec3 VoxelToWorldSpace(ivec3);
 };
 
 #endif

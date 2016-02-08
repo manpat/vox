@@ -21,7 +21,7 @@ struct App {
 	std::shared_ptr<Player> player;
 	std::shared_ptr<Camera> camera;
 	std::unique_ptr<ChunkManager> chunkManager;
-	std::unique_ptr<OverlayManager> overlayManager;
+	std::shared_ptr<OverlayManager> overlayManager;
 	std::shared_ptr<GUI> gui;
 
 	bool running = true;
