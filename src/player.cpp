@@ -1,3 +1,4 @@
+#include "chunkmanager.h"
 #include "voxelchunk.h"
 #include "player.h"
 #include "camera.h"
@@ -126,6 +127,22 @@ void Player::Update() {
 					if(Input::GetButtonDown(Input::MouseRight)){
 						chnk->DestroyBlock(vxpos);
 					}else{
+						if(!chnk->InBounds(vxpos)) {
+							auto chnkSize = ivec3{chnk->width, chnk->depth, chnk->height};
+							auto chmgr = ChunkManager::Get();
+							auto nchnk = chmgr->CreateChunk(chnk->width, chnk->height, chnk->depth, vec3{0});
+							nchnk->modelMatrix = chnk->modelMatrix * 
+								glm::translate(raycastResult.normal * vec3{chnkSize});
+
+							std::swap(chnkSize.y, chnkSize.z);
+
+							vxpos.x = (vxpos.x + chnkSize.x) % chnkSize.x;
+							vxpos.y = (vxpos.y + chnkSize.y) % chnkSize.y;
+							vxpos.z = (vxpos.z + chnkSize.z) % chnkSize.z;
+							logger << "New chunk " << chnkSize;
+							chnk = nchnk.get();
+						}
+
 						auto blk = chnk->CreateBlock(vxpos, blockType);
 						if(blk) blk->orientation = blockRot;
 					}

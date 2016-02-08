@@ -7,6 +7,16 @@
 
 static Log logger{"ChunkManager"};
 
+std::shared_ptr<ChunkManager> ChunkManager::Get() {
+	static std::weak_ptr<ChunkManager> wp;
+	std::shared_ptr<ChunkManager> p;
+
+	if(!(p = wp.lock()))
+		wp = (p = std::make_shared<ChunkManager>());
+
+	return p;
+}
+
 ChunkManager::ChunkManager() {
 	vertexBuildBuffer = new u8[VertexBufferSize];
 	faceBuildBuffer = new u8[FaceBufferSize];

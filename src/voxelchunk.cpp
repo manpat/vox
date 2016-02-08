@@ -258,7 +258,7 @@ void VoxelChunk::PostRender() {
 }
 
 Block* VoxelChunk::CreateBlock(ivec3 pos, u16 id) {
-	if((u32)pos.x >= width || (u32)pos.y >= height || (u32)pos.z >= depth) return nullptr;
+	if(!InBounds(pos)) return nullptr;
 	if(!id || id-1 >= BlockRegistry::blockInfoCount) return nullptr;
 
 	auto idx = pos.z + pos.y*depth + pos.x*depth*height;
@@ -280,7 +280,7 @@ Block* VoxelChunk::CreateBlock(ivec3 pos, u16 id) {
 }
 
 void VoxelChunk::DestroyBlock(ivec3 pos) {
-	if((u32)pos.x >= width || (u32)pos.y >= height || (u32)pos.z >= depth) return;
+	if(!InBounds(pos)) return;
 
 	auto idx = pos.z + pos.y*depth + pos.x*depth*height;
 	auto& block = blocks[idx];
@@ -297,7 +297,7 @@ void VoxelChunk::DestroyBlock(ivec3 pos) {
 }
 
 Block* VoxelChunk::GetBlock(ivec3 pos) {
-	if((u32)pos.x >= width || (u32)pos.y >= height || (u32)pos.z >= depth) return nullptr;
+	if(!InBounds(pos)) return nullptr;
 	auto idx = pos.z + pos.y*depth + pos.x*depth*height;
 
 	return blocks[idx];
@@ -317,3 +317,9 @@ vec3 VoxelChunk::VoxelToWorldSpace(ivec3 v) {
 	return vec3{modelMatrix * modelSpace};
 }
 
+bool VoxelChunk::InBounds(ivec3 p) {
+	return !(
+		(u32)p.x >= width || 
+		(u32)p.y >= height || 
+		(u32)p.z >= depth);
+}

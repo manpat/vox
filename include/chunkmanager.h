@@ -20,6 +20,8 @@ struct ChunkManager {
 
 	stbvox_mesh_maker mm;
 	u32 textureArray;
+	
+	static std::shared_ptr<ChunkManager> Get();
 
 	ChunkManager();
 	~ChunkManager();

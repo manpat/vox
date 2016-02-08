@@ -45,6 +45,8 @@ struct VoxelChunk {
 
 	ivec3 WorldToVoxelSpace(vec3);
 	vec3 VoxelToWorldSpace(ivec3);
+
+	bool InBounds(ivec3);
 };
 
 #endif

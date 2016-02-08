@@ -84,7 +84,7 @@ void App::Init() {
 	camera = std::make_shared<Camera>();
 	Camera::mainCamera = camera;
 
-	chunkManager = std::make_unique<ChunkManager>();
+	chunkManager = ChunkManager::Get();
 	overlayManager = OverlayManager::Get();
 
 	Debug::Init();
