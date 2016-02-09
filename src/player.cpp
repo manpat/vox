@@ -120,8 +120,9 @@ void Player::Update() {
 
 				if(!blockType) {
 					auto blk = chnk->GetBlock(vxpos);
-					if(blk && blk->info->dynamic) {
-						blk->OnInteract();
+					if(blk) {
+						if(auto dyn = blk->AsDynamic())
+							dyn->OnInteract();
 					}
 				}else{
 					if(Input::GetButtonDown(Input::MouseRight)){
@@ -139,7 +140,7 @@ void Player::Update() {
 							vxpos.x = (vxpos.x + chnkSize.x) % chnkSize.x;
 							vxpos.y = (vxpos.y + chnkSize.y) % chnkSize.y;
 							vxpos.z = (vxpos.z + chnkSize.z) % chnkSize.z;
-							logger << "New chunk " << chnkSize;
+							logger << "New chunk";
 							chnk = nchnk.get();
 						}
 

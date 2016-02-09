@@ -150,7 +150,6 @@ void VoxelChunk::UploadMesh() {
 
 	if(!vertexBO) glGenBuffers(1, &vertexBO);
 	if(!faceBO) glGenBuffers(1, &faceBO);
-	if(!faceTex) glGenTextures(1, &faceTex);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBO);
 	glBufferData(GL_ARRAY_BUFFER, numQuads*4*sizeof(u32), manager->vertexBuildBuffer, GL_DYNAMIC_DRAW);
@@ -160,9 +159,12 @@ void VoxelChunk::UploadMesh() {
 	glBufferData(GL_TEXTURE_BUFFER, numQuads*sizeof(u32), manager->faceBuildBuffer, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_TEXTURE_BUFFER, 0);
 
-	glBindTexture(GL_TEXTURE_BUFFER, faceTex);
-	glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA8UI, faceBO);
-	glBindTexture(GL_TEXTURE_BUFFER, 0);
+	if(!faceTex) {
+		glGenTextures(1, &faceTex);
+		glBindTexture(GL_TEXTURE_BUFFER, faceTex);
+		glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA8UI, faceBO);
+		glBindTexture(GL_TEXTURE_BUFFER, 0);
+	}
 }
 
 void VoxelChunk::Render(ShaderProgram* program) {
@@ -183,9 +185,7 @@ void VoxelChunk::Render(ShaderProgram* program) {
 	glBindTexture(GL_TEXTURE_BUFFER, faceTex);
 	glUniform1i(program->GetUniform("facearray"), 0);
 
-	static mat4 coordinateCorrection = glm::rotate<f32>(-PI/2.f, vec3{1,0,0});
-	glUniformMatrix4fv(program->GetUniform("model"), 1, false, 
-		glm::value_ptr(modelMatrix * coordinateCorrection));
+	glUniformMatrix4fv(program->GetUniform("model"), 1, false, glm::value_ptr(modelMatrix));
 
 	QuadElementBuffer::Draw(numQuads);
 
@@ -194,10 +194,10 @@ void VoxelChunk::Render(ShaderProgram* program) {
 }
 
 void VoxelChunk::Update() {
-	// TODO: A way for blocks to set dirty flag
 	UpdateBlocks();
 
-	blocksDirty = true;
+	// This could alternatively be done on a per block basis
+	//	rather than updating every voxel 
 	if(blocksDirty) {
 		UpdateVoxelData();
 		blocksDirty = false;
@@ -241,9 +241,10 @@ void VoxelChunk::UpdateBlocks() {
 	for(u32 y = 0; y < height; y++)
 	for(u32 z = 0; z < depth; z++) {
 		auto block = blocks[z + y*depth + x*depth*height];
-		if(!block || !block->info->dynamic) continue;
+		if(!block) continue;
 
-		block->Update();
+		if(auto dyn = block->AsDynamic())
+			dyn->Update();
 	}
 }
 void VoxelChunk::PostRender() {
@@ -251,9 +252,10 @@ void VoxelChunk::PostRender() {
 	for(u32 y = 0; y < height; y++)
 	for(u32 z = 0; z < depth; z++) {
 		auto block = blocks[z + y*depth + x*depth*height];
-		if(!block || !block->info->dynamic) continue;
+		if(!block) continue;
 
-		block->PostRender();
+		if(auto dyn = block->AsDynamic())
+			dyn->PostRender();
 	}
 }
 
@@ -273,7 +275,8 @@ Block* VoxelChunk::CreateBlock(ivec3 pos, u16 id) {
 	block->z = pos.z;
 	block->chunk = this;
 
-	block->OnPlace();
+	if(auto dyn = block->AsDynamic())
+		dyn->OnPlace();
 
 	blocksDirty = true;
 	return block;
@@ -287,7 +290,8 @@ void VoxelChunk::DestroyBlock(ivec3 pos) {
 
 	// TODO: Some of this should really be deferred
 	if(block) {
-		block->OnBreak();
+		if(auto dyn = block->AsDynamic())
+			dyn->OnBreak();
 	}
 
 	delete block;

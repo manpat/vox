@@ -55,7 +55,7 @@ struct PoleBlock : Block {
 	}
 };
 
-struct ComputerBlock : Block {
+struct ComputerBlock : DynamicBlock {
 	static void PopulateBlockInfo(BlockInfo* bt) {
 		bt->name = "computer";
 		bt->geometry = GeometryType::Cube;
@@ -87,7 +87,7 @@ struct ComputerBlock : Block {
 #include "camera.h"
 #include "debugdraw.h"
 
-struct TextBlock : Block {
+struct TextBlock : DynamicBlock {
 	static void PopulateBlockInfo(BlockInfo* bt) {
 		bt->name = "text";
 		bt->geometry = GeometryType::Cube;

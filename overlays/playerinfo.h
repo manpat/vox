@@ -8,6 +8,7 @@
 #include "common.h"
 #include "player.h"
 #include "overlay.h"
+#include "chunkmanager.h"
 #include "textrendering.h"
 #include "shaderregistry.h"
 
@@ -31,13 +32,22 @@ struct PlayerInfoOverlay : Overlay {
 			"North (-Z)", "East (+X)", "South (+Z)", "West (-X)"
 		};
 
+		auto chmgr = ChunkManager::Get();
+
 		std::ostringstream ss;
 		ss << (s32)fps << '\n';
 		ss << playerRotStrings[player->blockRot] << '\n';
 		ss << ((!player->blockType)?"interact":BlockRegistry::blocks[player->blockType-1].name) << '\n';
+		ss << "#chunks: " << chmgr->chunks.size() << '\n';
+
+		u64 estBlocks = 0;
+		for(auto& ch: chmgr->chunks) {
+			estBlocks += ch->width * ch->height * ch->depth;
+		}
+		ss << "Est #blocks: " << estBlocks << '\n';
 
 		timeText.SetText(ss.str());
-		f32 scale = 2.f/timeText.size.x;
+		f32 scale = 2.f/timeText.size.y;
 		timeText.modelMatrix = glm::translate(vec3{0.f, 12.f, 0} * vec3{gui->cellSize,0}) * glm::scale(vec3{scale});
 		timeText.Render();
 	}

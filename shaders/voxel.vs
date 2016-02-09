@@ -31,5 +31,8 @@ void main() {
 	// vec3 voxelspace_pos = offset * transform[0];
 	// vec3 position  = voxelspace_pos + transform[1];
 	voxelspace_pos = offset;
+
+	offset.xyz = offset.xzy;
+	offset.z = -offset.z;
 	gl_Position = viewProjection * model * vec4(offset,1.0);
 }

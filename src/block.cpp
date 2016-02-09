@@ -24,6 +24,10 @@ vec3 Block::GetRelativeCenter() {
 }
 
 vec3 Block::GetWorldCenter() {
-	vec4 pos = vec4{x+1.5, z+1.5, -(f32)y-1.5, 1};
-	return vec3{chunk->modelMatrix * pos};
+	return chunk->VoxelToWorldSpace(ivec3{x,y,z}) + vec3{.5f,.5f,-.5f};
+}
+
+DynamicBlock* Block::AsDynamic() {
+	if(!info || !info->dynamic) return nullptr;
+	return static_cast<DynamicBlock*>(this);
 }

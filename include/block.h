@@ -3,12 +3,6 @@
 
 #include "common.h"
 
-// Chunk manager has list of block types which get compiled into arrays of data for
-// 	stb_vox. Weird geometry blocks get multiple ids, regular blocks get single ids.
-
-// Each voxel chunk has list of dynamic blocks with their positions in chunk: should be map.
-// 
-
 enum class GeometryType {
 	Cube, Slope, Slab, 
 	Cross,
@@ -51,6 +45,7 @@ struct BlockInfo {
 };
 
 struct VoxelChunk;
+struct DynamicBlock;
 
 struct Block {
 	BlockInfo* info;
@@ -60,17 +55,21 @@ struct Block {
 	u8 x,y,z;
 	// Tint?
 
-	virtual ~Block() {};
+	mat4 GetOrientationMat();
+	vec3 GetRelativeCenter();
+	vec3 GetWorldCenter();
+
+	DynamicBlock* AsDynamic();
+};
+
+struct DynamicBlock : Block {
+	virtual ~DynamicBlock() {};
 
 	virtual void Update() {}
 	virtual void PostRender() {}
 	virtual void OnPlace() {}
 	virtual void OnBreak() {}
 	virtual void OnInteract() {}
-
-	mat4 GetOrientationMat();
-	vec3 GetRelativeCenter();
-	vec3 GetWorldCenter();
 };
 
 struct BlockRegistry {
