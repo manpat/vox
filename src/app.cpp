@@ -81,7 +81,7 @@ void App::Init() {
 	gui->screenHeight = WindowHeight;
 	gui->Init();
 	
-	camera = std::make_shared<Camera>();
+	camera = std::make_shared<Camera>(gui->aspect);
 	Camera::mainCamera = camera;
 
 	chunkManager = ChunkManager::Get();
@@ -145,9 +145,13 @@ void App::Run() {
 	panelText->position = vec2{6,6};
 	panelText->proportions = vec2{8,8};
 
-	for(s32 cx = -3; cx <= 3; cx++)
-	for(s32 cz = -3; cz <= 3; cz++){
+	constexpr s32 startPlaneSize = 1;
+	auto startPlaneNeigh = chunkManager->CreateNeighborhood();
+
+	for(s32 cx = -startPlaneSize; cx <= startPlaneSize; cx++)
+	for(s32 cz = -startPlaneSize; cz <= startPlaneSize; cz++){
 		auto chunk = chunkManager->CreateChunk(30,30,10,vec3{cx*30,10,cz*30});
+		chunk->SetNeighborhood(startPlaneNeigh);
 
 		for(u32 y = 0; y < chunk->height; y++)
 		for(u32 x = 0; x < chunk->width; x++)

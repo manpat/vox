@@ -9,8 +9,8 @@
 
 static Log logger{"VoxelChunk"};
 
-VoxelChunk::VoxelChunk(ChunkManager* cm, u32 w, u32 h, u32 d) 
-	: manager{cm}, width{w}, height{h}, depth{d} {
+VoxelChunk::VoxelChunk(u32 w, u32 h, u32 d) 
+	: width{w}, height{h}, depth{d} {
 
 	u64 size = (width+2)*(height+2)*(depth+2);
 	geometryData = new u8[size];
@@ -90,6 +90,7 @@ static btVector3 VoxIntToVert(u32 vert) {
 }
 
 void VoxelChunk::GenerateMesh() {
+	auto manager = ChunkManager::Get();
 	auto mm = &manager->mm;
 
 	auto vinput = stbvox_get_input_description(mm);
@@ -148,6 +149,8 @@ void VoxelChunk::GenerateMesh() {
 
 void VoxelChunk::UploadMesh() {
 	if(!numQuads) return;
+
+	auto manager = ChunkManager::Get();
 
 	if(!vertexBO) glGenBuffers(1, &vertexBO);
 	if(!faceBO) glGenBuffers(1, &faceBO);
@@ -259,6 +262,59 @@ void VoxelChunk::PostRender() {
 			dyn->PostRender();
 	}
 }
+
+std::shared_ptr<VoxelChunk> VoxelChunk::GetOrCreateNeighbor(vec3 position) {
+	auto manager = ChunkManager::Get();
+	std::shared_ptr<ChunkNeighborhood> neigh;
+
+	if(neigh = neighborhood.lock()) {
+		for(auto& n: neigh->chunks) {
+			auto ch = n.lock();
+			if(!ch) continue;
+
+			auto vxpos = ch->WorldToVoxelSpace(position);
+			if(ch->InBounds(vxpos)) return ch;
+		}
+	}else{
+		neigh = manager->CreateNeighborhood();
+		SetNeighborhood(neigh);
+	}
+
+	auto vxpos = WorldToVoxelSpace(position);
+	vec3 orthoDir {0};
+
+	if(vxpos.x >=(s32)width) 		orthoDir = vec3{1,0,0};
+	else if(vxpos.z >=(s32)depth) 	orthoDir = vec3{0,1,0};
+	else if(vxpos.y >=(s32)height) 	orthoDir = vec3{0,0,-1};
+
+	else if(vxpos.x < 0) 			orthoDir = vec3{-1,0,0};
+	else if(vxpos.z < 0) 			orthoDir = vec3{0,-1,0};
+	else if(vxpos.y < 0) 			orthoDir = vec3{0,0,1};
+
+	auto chunk = manager->CreateChunk(width, height, depth);
+	chunk->modelMatrix = modelMatrix * glm::translate(orthoDir * vec3{width, depth, height});
+	chunk->SetNeighborhood(neigh);
+
+	return chunk;
+}
+
+void VoxelChunk::SetNeighborhood(std::shared_ptr<ChunkNeighborhood> n) {
+	auto currn = neighborhood.lock();
+	
+	if(currn) {
+		auto sself = self.lock();
+		auto& ns = currn->chunks;
+		auto endIt = std::remove_if(ns.begin(), ns.end(), [&sself](auto wn) {
+			return wn.lock() == sself;
+		});
+
+		ns.erase(endIt, ns.end());
+	}
+
+	neighborhood = n;
+	n->chunks.emplace_back(self);
+}
+
 
 Block* VoxelChunk::CreateBlock(ivec3 pos, u16 id) {
 	if(!InBounds(pos)) return nullptr;

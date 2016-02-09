@@ -129,18 +129,9 @@ void Player::Update() {
 						chnk->DestroyBlock(vxpos);
 					}else{
 						if(!chnk->InBounds(vxpos)) {
-							auto chnkSize = ivec3{chnk->width, chnk->depth, chnk->height};
-							auto chmgr = ChunkManager::Get();
-							auto nchnk = chmgr->CreateChunk(chnk->width, chnk->height, chnk->depth, vec3{0});
-							nchnk->modelMatrix = chnk->modelMatrix * 
-								glm::translate(raycastResult.normal * vec3{chnkSize});
+							auto nchnk = chnk->GetOrCreateNeighbor(chpos);
+							vxpos = nchnk->WorldToVoxelSpace(chpos);
 
-							std::swap(chnkSize.y, chnkSize.z);
-
-							vxpos.x = (vxpos.x + chnkSize.x) % chnkSize.x;
-							vxpos.y = (vxpos.y + chnkSize.y) % chnkSize.y;
-							vxpos.z = (vxpos.z + chnkSize.z) % chnkSize.z;
-							logger << "New chunk";
 							chnk = nchnk.get();
 						}
 

@@ -4,12 +4,12 @@
 #include "common.h"
 #include "physics.h"
 
+struct ChunkNeighborhood;
 struct ShaderProgram;
 struct ChunkManager;
 struct Block;
 
 struct VoxelChunk {
-	ChunkManager* manager;
 	RigidBody* rigidbody;
 	Collider* collider;
 
@@ -27,7 +27,10 @@ struct VoxelChunk {
 
 	mat4 modelMatrix;
 
-	VoxelChunk(ChunkManager*, u32, u32, u32);
+	std::weak_ptr<VoxelChunk> self;
+	std::weak_ptr<ChunkNeighborhood> neighborhood;
+
+	VoxelChunk(u32, u32, u32);
 	~VoxelChunk();
 
 	void GenerateMesh();
@@ -38,6 +41,9 @@ struct VoxelChunk {
 	void Update();
 	void Render(ShaderProgram*);
 	void PostRender();
+
+	std::shared_ptr<VoxelChunk> GetOrCreateNeighbor(vec3 position);
+	void SetNeighborhood(std::shared_ptr<ChunkNeighborhood>);
 
 	Block* CreateBlock(ivec3, u16);
 	void DestroyBlock(ivec3);

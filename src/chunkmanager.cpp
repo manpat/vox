@@ -86,7 +86,7 @@ void ChunkManager::PopulateVoxelInfo() {
 }
 
 std::shared_ptr<VoxelChunk> ChunkManager::CreateChunk(u32 w, u32 h, u32 d, vec3 position, bool placeBlock) {
-	auto nchunk = std::make_shared<VoxelChunk>(this, w,h,d);
+	auto nchunk = std::make_shared<VoxelChunk>(w,h,d);
 	chunks.push_back(nchunk);
 
 	if(placeBlock) {
@@ -104,8 +104,16 @@ std::shared_ptr<VoxelChunk> ChunkManager::CreateChunk(u32 w, u32 h, u32 d, vec3 
 	position.z += nchunk->depth/2.f +1;
 
 	nchunk->modelMatrix = glm::translate(position);
+	nchunk->self = nchunk;
 	return nchunk;
 }
+
+std::shared_ptr<ChunkNeighborhood> ChunkManager::CreateNeighborhood() {
+	auto nhood = std::make_shared<ChunkNeighborhood>();
+	neighborhoods.emplace_back(nhood);
+	return nhood;
+}
+
 
 void ChunkManager::Update() {
 	for(auto& vc: chunks) {
