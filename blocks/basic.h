@@ -70,7 +70,7 @@ struct ComputerBlock : DynamicBlock {
 
 	void OnInteract() override {
 		Log("ComputerBlock") << "OnInteract";
-		// TODO: Create overlay
+		// TODO: Create/Show overlay
 	}
 	
 	void OnPlace() override {

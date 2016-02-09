@@ -15,6 +15,8 @@
 struct PlayerInfoOverlay : Overlay {
 	std::shared_ptr<Player> player;
 	TextMesh timeText;
+	
+	u32 primCount;
 
 	PlayerInfoOverlay(std::shared_ptr<Player> p) : player{p}, timeText{Font::defaultFont} {}
 	void Render() override {
@@ -45,6 +47,7 @@ struct PlayerInfoOverlay : Overlay {
 			estBlocks += ch->width * ch->height * ch->depth;
 		}
 		ss << "Est #blocks: " << estBlocks << '\n';
+		ss << "#primitives: " << primCount << '\n';
 
 		timeText.SetText(ss.str());
 		f32 scale = 2.f/timeText.size.y;

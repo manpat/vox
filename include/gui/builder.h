@@ -5,7 +5,6 @@
 
 struct CalculatedElementMetrics;
 
-// TODO: How do deal with depth?
 struct GUIBuilder {
 	struct Vertex {
 		vec3 position;

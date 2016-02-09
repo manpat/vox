@@ -107,6 +107,7 @@ void VoxelChunk::GenerateMesh() {
 
 	if(!stbvox_make_mesh(mm)) {
 		// TODO: resize and try again/continue
+		// Low priority, chunks should be relatively small anyway
 		logger << "Mesh generator ran out of room";
 	}
 

@@ -166,6 +166,10 @@ void App::Run() {
 	auto playerinfo = std::make_shared<PlayerInfoOverlay>(player);
 	overlayManager->Add(playerinfo);
 
+	u32 primCount = 0;
+	u32 primCountQuery;
+	glGenQueries(1, &primCountQuery);
+
 	while(running) {
 		Input::EndFrame();
 
@@ -221,14 +225,21 @@ void App::Run() {
 		glClearColor(0.1,0.1,0.1,0);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
+		glBeginQuery(GL_PRIMITIVES_GENERATED, primCountQuery);
+
 		chunkManager->Render(camera.get());
 		overlayManager->Render();
 		gui->Render();
 
 		Debug::Render();
 
+		glEndQuery(GL_PRIMITIVES_GENERATED);
+
 		SDL_GL_SwapWindow(window);
 		SDL_Delay(1);
+
+		glGetQueryObjectuiv(primCountQuery, GL_QUERY_RESULT, &primCount);
+		playerinfo->primCount = primCount;
 
 		auto end = high_resolution_clock::now();
 		Time::dt = duration_cast<duration<f32>>(end-begin).count();

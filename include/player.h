@@ -6,6 +6,7 @@
 
 struct Camera;
 
+// TODO: Create PlayerBase class to make network integration easier
 // TODO: Focus/interaction states
 struct Player {
 	static constexpr f32 Height = 1.5f;
