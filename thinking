@@ -86,3 +86,35 @@ Thrusters
 "Punch it chewie"
 Shield generator
 Weapon stuff
+
+
+
+
+
+Moving things
+=============
+
+VoxelChunks can be at weird angles and can move so we need
+a way to render and apply phyics to things near them
+
+Biggest priority being ships
+
+"Gravity Generator"
+
+On collide with VoxelChunk set players gravity thing/parent
+Rendering should be fine
+
+Physics tho
+	Making players move with ships could be awkward
+
+	One possibility:
+		simulate players in influence of ship as if it weren't moving and upright
+		then simulate the ship as normal
+
+		Separate physics world?
+		Or copy rigidbodies to upright version and make real versions kinematic
+			Update position/rotation as appropriate
+
+	Another:
+		Some way to parent rigidbodies?
+		Constraints?
