@@ -29,6 +29,7 @@ struct VoxelChunk {
 
 	std::weak_ptr<VoxelChunk> self;
 	std::weak_ptr<ChunkNeighborhood> neighborhood;
+	ivec3 positionInNeighborhood; // Multiple of {width,height,depth} in ?voxelspace?
 
 	VoxelChunk(u32, u32, u32);
 	~VoxelChunk();

@@ -49,6 +49,7 @@ void Player::Update() {
 		SetNoclip(!noclip);
 	}
 
+	// TODO: Move all this shit out into a PlayerState
 	auto nyaw = Input::GetMouseDelta().x * 2.0 * PI * Time::dt * 7.f;
 	auto npitch = -Input::GetMouseDelta().y * 2.0 * PI * Time::dt * 7.f;
 	constexpr f32 limit = PI/2.f;
@@ -110,6 +111,8 @@ void Player::Update() {
 
 		if(raycastResult.hit){
 			auto col = raycastResult.rigidbody->getCollisionShape();
+			// TODO: Change this
+			// It will explode as soon as we start using the user pointers for other things
 			if(auto chnk = (VoxelChunk*)col->getUserPointer()) {
 
 				if(Input::GetButtonDown(Input::MouseRight) || !blockType)

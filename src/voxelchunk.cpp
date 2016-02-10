@@ -199,9 +199,12 @@ void VoxelChunk::Render(ShaderProgram* program) {
 
 void VoxelChunk::Update() {
 	UpdateBlocks();
+	// TODO: Check bordering voxels of neighbors and copy into margin
+	// Otherwise AO breaks
+	// Or rather notify neighbors when edges change
 
 	// This could alternatively be done on a per block basis
-	//	rather than updating every voxel 
+	//	rather than updating every voxel in the chunk
 	if(blocksDirty) {
 		UpdateVoxelData();
 		blocksDirty = false;
@@ -294,25 +297,18 @@ std::shared_ptr<VoxelChunk> VoxelChunk::GetOrCreateNeighbor(vec3 position) {
 	auto chunk = manager->CreateChunk(width, height, depth);
 	chunk->modelMatrix = modelMatrix * glm::translate(orthoDir * vec3{width, depth, height});
 	chunk->SetNeighborhood(neigh);
+	// TODO: chunk->positionInNeighborhood = ...
 
 	return chunk;
 }
 
-void VoxelChunk::SetNeighborhood(std::shared_ptr<ChunkNeighborhood> n) {
-	auto currn = neighborhood.lock();
-	
-	if(currn) {
-		auto sself = self.lock();
-		auto& ns = currn->chunks;
-		auto endIt = std::remove_if(ns.begin(), ns.end(), [&sself](auto wn) {
-			return wn.lock() == sself;
-		});
-
-		ns.erase(endIt, ns.end());
+void VoxelChunk::SetNeighborhood(std::shared_ptr<ChunkNeighborhood> n) {	
+	if(auto neigh = neighborhood.lock()) {
+		neigh->RemoveChunk(self.lock());
 	}
 
+	n->AddChunk(self.lock());
 	neighborhood = n;
-	n->chunks.emplace_back(self);
 }
 
 

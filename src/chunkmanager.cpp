@@ -25,27 +25,25 @@ ChunkManager::ChunkManager() {
 
 	textureArray = CreateTextureArrayFromAtlas("textures/atlas.png", 16, 16);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray);
-	logger << "Initialised texture atlas";
-
-	// TODO: Figure out why this hangs sometimes
-	glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
-	logger << "Generated mipmaps";
 	
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	
+	logger << "Note: this bit hangs sometimes and I don't know why";
+	// TODO: Figure out why this hangs sometimes
+	glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+	logger << "Generated mipmaps";
 
 	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 
-	logger << "Init mesh maker";
 	stbvox_init_mesh_maker(&mm);
 	auto vinput = stbvox_get_input_description(&mm);
 	memset(vinput, 0, sizeof(stbvox_input_description));
 	
 	vinput->block_geometry = &voxelTypes[0];
 	vinput->block_tex1_face = (u8(*)[6]) &voxelTextures[0];
-	logger << "Initialisation complete";
 }
 
 ChunkManager::~ChunkManager() {
@@ -160,4 +158,34 @@ void ChunkManager::Render(Camera* cam) {
 	for(auto& vc: chunks) {
 		vc->PostRender();
 	}
+}
+
+/*
+	                                                                                                                                       
+	888b      88            88             88          88                                 88                                           88  
+	8888b     88            ""             88          88                                 88                                           88  
+	88 `8b    88                           88          88                                 88                                           88  
+	88  `8b   88  ,adPPYba, 88  ,adPPYb,d8 88,dPPYba,  88,dPPYba,   ,adPPYba,  8b,dPPYba, 88,dPPYba,   ,adPPYba,   ,adPPYba,   ,adPPYb,88  
+	88   `8b  88 a8P_____88 88 a8"    `Y88 88P'    "8a 88P'    "8a a8"     "8a 88P'   "Y8 88P'    "8a a8"     "8a a8"     "8a a8"    `Y88  
+	88    `8b 88 8PP""""""" 88 8b       88 88       88 88       d8 8b       d8 88         88       88 8b       d8 8b       d8 8b       88  
+	88     `8888 "8b,   ,aa 88 "8a,   ,d88 88       88 88b,   ,a8" "8a,   ,a8" 88         88       88 "8a,   ,a8" "8a,   ,a8" "8a,   ,d88  
+	88      `888  `"Ybbd8"' 88  `"YbbdP"Y8 88       88 8Y"Ybbd8"'   `"YbbdP"'  88         88       88  `"YbbdP"'   `"YbbdP"'   `"8bbdP"Y8  
+	                            aa,    ,88                                                                                                 
+	                             "Y8bbdP"                                                                                                  
+*/
+void ChunkNeighborhood::AddChunk(std::shared_ptr<VoxelChunk> c) {
+	if(!chunks.size()) {
+		chunkSize = ivec3{c->width, c->height, c->depth};
+		c->positionInNeighborhood = ivec3{0};
+	}
+
+	chunks.emplace_back(c);
+}
+
+void ChunkNeighborhood::RemoveChunk(std::shared_ptr<VoxelChunk> c) {
+	auto endIt = std::remove_if(chunks.begin(), chunks.end(), [&c](auto wn) {
+		return wn.lock() == c;
+	});
+
+	chunks.erase(endIt, chunks.end());
 }

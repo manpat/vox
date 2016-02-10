@@ -9,6 +9,10 @@ struct VoxelChunk;
 
 struct ChunkNeighborhood {
 	std::vector<std::weak_ptr<VoxelChunk>> chunks;
+	ivec3 chunkSize;
+
+	void AddChunk(std::shared_ptr<VoxelChunk>);
+	void RemoveChunk(std::shared_ptr<VoxelChunk>);
 };
 
 struct ChunkManager {
