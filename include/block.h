@@ -49,20 +49,17 @@ struct DynamicBlock;
 
 struct Block {
 	BlockInfo* info;
-	VoxelChunk* chunk;
 
 	u8 orientation;
-	u8 x,y,z;
 	// Tint?
-
-	mat4 GetOrientationMat();
-	vec3 GetRelativeCenter();
-	vec3 GetWorldCenter();
 
 	DynamicBlock* AsDynamic();
 };
 
 struct DynamicBlock : Block {
+	VoxelChunk* chunk;
+	u8 x,y,z;
+	
 	virtual ~DynamicBlock() {};
 
 	virtual void Update() {}
@@ -70,6 +67,10 @@ struct DynamicBlock : Block {
 	virtual void OnPlace() {}
 	virtual void OnBreak() {}
 	virtual void OnInteract() {}
+
+	mat4 GetOrientationMat();
+	vec3 GetRelativeCenter();
+	vec3 GetWorldCenter();
 };
 
 struct BlockRegistry {

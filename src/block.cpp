@@ -14,20 +14,19 @@ BlockRegisterer<ComputerBlock> computerBlock;
 BlockRegisterer<TextBlock> textBlock;
 
 
-
-mat4 Block::GetOrientationMat() {
-	return glm::rotate<f32>(-PI/2.f*orientation, vec3{0,1,0});
-}
-
-vec3 Block::GetRelativeCenter() {
-	return vec3{x+1.5, z+1.5, -(f32)y-1.5};
-}
-
-vec3 Block::GetWorldCenter() {
-	return chunk->VoxelToWorldSpace(ivec3{x,y,z}) + vec3{.5f,.5f,-.5f};
-}
-
 DynamicBlock* Block::AsDynamic() {
 	if(!info || !info->dynamic) return nullptr;
 	return static_cast<DynamicBlock*>(this);
+}
+
+mat4 DynamicBlock::GetOrientationMat() {
+	return glm::rotate<f32>(-PI/2.f*orientation, vec3{0,1,0});
+}
+
+vec3 DynamicBlock::GetRelativeCenter() {
+	return vec3{x+1.5, z+1.5, -(f32)y-1.5};
+}
+
+vec3 DynamicBlock::GetWorldCenter() {
+	return chunk->VoxelToWorldSpace(ivec3{x,y,z}) + vec3{.5f,.5f,-.5f};
 }

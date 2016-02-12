@@ -254,6 +254,7 @@ void VoxelChunk::UpdateBlocks() {
 			dyn->Update();
 	}
 }
+
 void VoxelChunk::PostRender() {
 	for(u32 x = 0; x < width; x++)
 	for(u32 y = 0; y < height; y++)
@@ -297,7 +298,10 @@ std::shared_ptr<VoxelChunk> VoxelChunk::GetOrCreateNeighbor(vec3 position) {
 	auto chunk = manager->CreateChunk(width, height, depth);
 	chunk->modelMatrix = modelMatrix * glm::translate(orthoDir * vec3{width, depth, height});
 	chunk->SetNeighborhood(neigh);
-	// TODO: chunk->positionInNeighborhood = ...
+
+	std::swap(orthoDir.y, orthoDir.z);
+	orthoDir.y = -orthoDir.y;
+	chunk->positionInNeighborhood = positionInNeighborhood + ivec3{orthoDir};
 
 	return chunk;
 }
@@ -323,13 +327,15 @@ Block* VoxelChunk::CreateBlock(ivec3 pos, u16 id) {
 	auto block = factory->Create();
 	blocks[idx] = block;
 	block->orientation = 0;
-	block->x = pos.x;
-	block->y = pos.y;
-	block->z = pos.z;
-	block->chunk = this;
 
-	if(auto dyn = block->AsDynamic())
+	if(auto dyn = block->AsDynamic()) {
+		dyn->x = pos.x;
+		dyn->y = pos.y;
+		dyn->z = pos.z;
+		dyn->chunk = this;
+		
 		dyn->OnPlace();
+	}
 
 	blocksDirty = true;
 	return block;
@@ -341,7 +347,7 @@ void VoxelChunk::DestroyBlock(ivec3 pos) {
 	auto idx = pos.z + pos.y*depth + pos.x*depth*height;
 	auto& block = blocks[idx];
 
-	// TODO: Some of this should really be deferred
+	// TODO: Some of this should probably be deferred
 	if(block) {
 		if(auto dyn = block->AsDynamic())
 			dyn->OnBreak();

@@ -152,6 +152,7 @@ void App::Run() {
 	for(s32 cz = -startPlaneSize; cz <= startPlaneSize; cz++){
 		auto chunk = chunkManager->CreateChunk(30,30,10,vec3{cx*30,10,cz*30});
 		chunk->SetNeighborhood(startPlaneNeigh);
+		chunk->positionInNeighborhood = ivec3{cx, cz, 0};
 
 		for(u32 y = 0; y < chunk->height; y++)
 		for(u32 x = 0; x < chunk->width; x++)
@@ -210,6 +211,10 @@ void App::Run() {
 		if(Input::GetKeyDown(SDLK_t)){
 			testPanel->active ^= true;
 			Input::doCapture = !testPanel->active;
+		}
+
+		if(Input::GetKeyDown(SDLK_DELETE)) {
+			chunkManager->chunks.clear();
 		}
 
 		gui->InjectMouseMove(Input::mousePos);

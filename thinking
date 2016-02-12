@@ -118,3 +118,63 @@ Physics tho
 	Another:
 		Some way to parent rigidbodies?
 		Constraints?
+
+
+
+Networking
+==========
+
+Transport layer
+---------------
+	Lowest level
+	Handles low level connections and sending/receiving packets
+	Common between server and client
+
+Replication layer
+-----------------
+	Synchronises entities between server and clients
+	Gathers data from local player and manages updating of NetworkedPlayers
+
+	VoxelChunk keeps track of modified blocks in buffer which is sent to transport 
+		layer at end of frame
+
+		Transport layer can then optimise packets for large changes
+
+
+Where does physics simulation happen?
+	On both server and client
+	client phys is approximant for non local objects
+	local player is responsible for own physics
+
+	Physics on non player objects owned by server
+		and approximated/updated by/on clients
+
+What happens when a player interacts with a block?
+	block::OnClientInteract -> *network* -> block::OnServerInteract
+	ClientInteract shows gui which displays current state of block
+		gui sends further messages to server
+	ServerInteract does any actual logic
+
+Client
+------
+	All mesh related stuff
+	All rendering related stuff
+	All gui stuff?
+	LocalPlayer
+	NetworkedPlayer
+	Local physics
+
+Shared
+------
+	Neighborhood stuff
+	Chunk stuff
+	Block definitions
+	PlayerBase
+
+Server
+------
+	ServerPlayer
+	Client approximation ?
+	Physics of non player objects
+
+	Block update
