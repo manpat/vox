@@ -23,12 +23,11 @@ struct ChunkManager {
 	std::vector<std::shared_ptr<ChunkNeighborhood>> neighborhoods;
 	u8* vertexBuildBuffer;
 	u8* faceBuildBuffer;
+	u32 chunkIDCounter;
 
-	std::vector<u8> voxelTypes;
-	std::vector<u8> voxelTextures;
+	std::vector<u8> voxelGeometryMap;
 
 	stbvox_mesh_maker mm;
-	u32 textureArray;
 	
 	static std::shared_ptr<ChunkManager> Get();
 
@@ -36,11 +35,11 @@ struct ChunkManager {
 	~ChunkManager();
 	void PopulateVoxelInfo();
 
+	// TODO: Reduce interface. The last two arguments aren't particularly useful in most cases
 	std::shared_ptr<VoxelChunk> CreateChunk(u32 w, u32 h, u32 d, vec3 position = vec3{0}, bool = false);
 	std::shared_ptr<ChunkNeighborhood> CreateNeighborhood();
 
 	void Update();
-	void Render(Camera*);
 };
 
 #endif

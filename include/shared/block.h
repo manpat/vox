@@ -48,7 +48,7 @@ struct VoxelChunk;
 struct DynamicBlock;
 
 struct Block {
-	BlockInfo* info;
+	BlockInfo* info; // TODO: Could this just be blockID? May be necessary for serialization
 
 	u8 orientation;
 	// Tint?

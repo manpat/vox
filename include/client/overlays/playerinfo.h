@@ -6,19 +6,19 @@
 #include "gui.h"
 #include "block.h"
 #include "common.h"
-#include "player.h"
 #include "overlay.h"
+#include "localplayer.h"
 #include "chunkmanager.h"
 #include "textrendering.h"
 #include "shaderregistry.h"
 
 struct PlayerInfoOverlay : Overlay {
-	std::shared_ptr<Player> player;
+	std::shared_ptr<LocalPlayer> player;
 	TextMesh timeText;
 	
 	u32 primCount;
 
-	PlayerInfoOverlay(std::shared_ptr<Player> p) : player{p}, timeText{Font::defaultFont} {}
+	PlayerInfoOverlay(std::shared_ptr<LocalPlayer> p) : player{p}, timeText{Font::defaultFont} {}
 	void Render() override {
 		auto textProgram = ShaderRegistry::GetProgram("text");
 		textProgram->Use();

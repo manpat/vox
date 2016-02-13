@@ -31,6 +31,12 @@ struct PlayerBase {
 	// Set gravity volume
 
 	// Get current tool/held item
+
+	// Player ID
+	// Admin?
+	// Team
+
+	// Chat?
 };
 
 #endif

@@ -9,6 +9,7 @@ struct ShaderProgram;
 struct ChunkManager;
 struct Block;
 
+// NOTE: I'm not sure about VoxelChunk knowing about physics/numQuads
 struct VoxelChunk {
 	RigidBody* rigidbody;
 	Collider* collider;
@@ -17,9 +18,9 @@ struct VoxelChunk {
 
 	u8* geometryData;
 	u8* rotationData;
-	u8* occlusionData;
+	u8* occlusionData; // NOTE: Occlusion data not needed on server side
 	
-	u32 vertexBO, faceBO, faceTex;
+	u32 chunkID;
 	u32 width, height, depth;
 	u32 numQuads;
 	bool voxelsDirty;
@@ -34,14 +35,14 @@ struct VoxelChunk {
 	VoxelChunk(u32, u32, u32);
 	~VoxelChunk();
 
+	// NOTE: GenerateMesh modifies the state of ChunkManager
+	//	This is obviously bad design
 	void GenerateMesh();
-	void UploadMesh();
 	void UpdateVoxelData();
 	void UpdateBlocks();
 
 	void Update();
-	void Render(ShaderProgram*);
-	void PostRender();
+	void PostRender(); // Only called on client side
 
 	std::shared_ptr<VoxelChunk> GetOrCreateNeighbor(vec3 position);
 	void SetNeighborhood(std::shared_ptr<ChunkNeighborhood>);

@@ -23,9 +23,9 @@ build:
 	@make client -j8 --silent
 
 obj: ; @mkdir obj
-obj/server/ obj/client/ obj/shared/: obj
-	@echo "-- Making build directory: $@ --"
-	@mkdir $@
+obj/server obj/client obj/shared obj/client/gui: obj
+	@echo "-- Checking build directory: $@ --"
+	@$(shell [ ! -d $@ ] && mkdir $@)
 
 server: $(ServerObj)
 	@echo "-- Linking Server --"
@@ -38,27 +38,33 @@ client: $(ClientObj)
 src/shared/block.cpp: include/shared/blocks/*.h
 	@touch src/shared/block.cpp
 
-obj/server/%.o: src/server/%.cpp include/server/%.h obj/server/
+src/client/gui/%.cpp: obj/client obj/client/gui ;
+
+src/server/%.cpp: obj/server ;
+src/shared/%.cpp: obj/shared ;
+src/client/%.cpp: obj/client ;
+
+obj/server/%.o: src/server/%.cpp include/server/%.h
 	@echo "-- Generating $@ --"
 	@$(GCC) $(ServerSFlags) -c $< -o $@
 
-obj/server/%.o: src/server/%.cpp obj/server/
+obj/server/%.o: src/server/%.cpp
 	@echo "-- Generating $@ --"
 	@$(GCC) $(ServerSFlags) -c $< -o $@
 
-obj/client/%.o: src/client/%.cpp include/client/%.h obj/client/
+obj/client/%.o: src/client/%.cpp include/client/%.h
 	@echo "-- Generating $@ --"
 	@$(GCC) $(ClientSFlags) -c $< -o $@
 
-obj/client/%.o: src/client/%.cpp obj/client/
+obj/client/%.o: src/client/%.cpp
 	@echo "-- Generating $@ --"
 	@$(GCC) $(ClientSFlags) -c $< -o $@
 
-obj/shared/%.o: src/shared/%.cpp include/shared/%.h obj/shared/
+obj/shared/%.o: src/shared/%.cpp include/shared/%.h
 	@echo "-- Generating $@ --"
 	@$(GCC) $(SharedSFlags) -c $< -o $@
 
-obj/shared/%.o: src/shared/%.cpp obj/shared/
+obj/shared/%.o: src/shared/%.cpp
 	@echo "-- Generating $@ --"
 	@$(GCC) $(SharedSFlags) -c $< -o $@
 

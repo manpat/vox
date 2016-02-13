@@ -140,6 +140,9 @@ Replication layer
 
 		Transport layer can then optimise packets for large changes
 
+Client doesn't create chunks
+	Client instead sends out of bounds voxel space position
+	Server does checks and creates new chunk
 
 Where does physics simulation happen?
 	On both server and client
@@ -169,6 +172,13 @@ Client
 	NetworkedPlayer
 	Local physics
 
+	ChunkRenderer
+		one renders many
+		
+	ChunkRenderInfo
+		one per chunk
+		contains buffer objects
+
 Shared
 ------
 	Neighborhood stuff
@@ -176,9 +186,13 @@ Shared
 		Both server and client need representations of chunks and neighborhoods
 	Block definitions
 		Client needs to know how to render, server needs to know what to update
-	PlayerBase
-
 	Physics simulation
+
+	PlayerBase
+	ChunkManager
+		Should have no rendering logic
+
+	Lowlevel networking
 
 Server
 ------
@@ -187,3 +201,5 @@ Server
 	Physics of non player objects
 
 	Block update
+
+

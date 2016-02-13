@@ -12,6 +12,8 @@ using RigidBody = btRigidBody;
 using RigidBodyInfo = btRigidBody::btRigidBodyConstructionInfo;
 using Collider = btCollisionShape;
 
+// TODO: Single collider representation
+// TODO: Multiple worlds for ships
 struct Physics {
 	struct RaycastResult {
 		RigidBody* rigidbody;

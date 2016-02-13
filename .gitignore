@@ -1,4 +1,6 @@
 build
+server
+client
 *.o
 out
 *.exe

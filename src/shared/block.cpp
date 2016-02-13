@@ -10,8 +10,8 @@ BlockRegisterer<LightThingBlock> lightThingBlock;
 BlockRegisterer<RampBlock> rampBlock;
 BlockRegisterer<PoleBlock> poleBlock;
 
-BlockRegisterer<ComputerBlock> computerBlock;
-BlockRegisterer<TextBlock> textBlock;
+// BlockRegisterer<ComputerBlock> computerBlock;
+// BlockRegisterer<TextBlock> textBlock;
 
 
 DynamicBlock* Block::AsDynamic() {

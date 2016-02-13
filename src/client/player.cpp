@@ -1,15 +1,15 @@
 #include "chunkmanager.h"
+#include "localplayer.h"
 #include "voxelchunk.h"
-#include "player.h"
 #include "camera.h"
 #include "input.h"
 #include "block.h"
 
-static Log logger{"Player"};
+static Log logger{"LocalPlayer"};
 
 struct PlayerMotionState : public btMotionState {
 	Camera* cam;
-	vec3 cameraOffset {0, Player::Height/2.f, 0};
+	vec3 cameraOffset {0, LocalPlayer::Height/2.f, 0};
 
 	PlayerMotionState(Camera* c) : cam{c} {}
 
@@ -23,9 +23,9 @@ struct PlayerMotionState : public btMotionState {
 	}
 };
 
-Player::Player(std::shared_ptr<Camera> c): camera{c}, noclip{false} {
+LocalPlayer::LocalPlayer(std::shared_ptr<Camera> c): camera{c}, noclip{false} {
 	auto ms = new PlayerMotionState{camera.get()};
-	collider = new btCapsuleShape{.5f, Player::Height - 1.f};
+	collider = new btCapsuleShape{.5f, LocalPlayer::Height - 1.f};
 
 	btScalar mass = 10.;
 	btVector3 inertia {0,0,0};
@@ -40,11 +40,9 @@ Player::Player(std::shared_ptr<Camera> c): camera{c}, noclip{false} {
 	rigidbody->setFriction(0);
 }
 
-Player::~Player() {
+LocalPlayer::~LocalPlayer() {}
 
-}
-
-void Player::Update() {
+void LocalPlayer::Update() {
 	if(Input::GetKeyDown(SDLK_g)){
 		SetNoclip(!noclip);
 	}
@@ -150,7 +148,7 @@ void Player::Update() {
 	}
 }
 
-void Player::SetNoclip(bool n) {
+void LocalPlayer::SetNoclip(bool n) {
 	noclip = n;
 
 	Physics::world->removeRigidBody(rigidbody);

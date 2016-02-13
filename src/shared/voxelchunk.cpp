@@ -1,8 +1,6 @@
 #include "chunkmanager.h"
-#include "client/quadbuffer.h"
 #include "voxelchunk.h"
 #include "physics.h"
-#include "client/shader.h"
 #include "block.h"
 
 #include "stb_voxel_render.h"
@@ -11,6 +9,8 @@ static Log logger{"VoxelChunk"};
 
 VoxelChunk::VoxelChunk(u32 w, u32 h, u32 d) 
 	: width{w}, height{h}, depth{d} {
+
+	chunkID = 0;
 
 	u64 size = (width+2)*(height+2)*(depth+2);
 	geometryData = new u8[size];
@@ -25,7 +25,6 @@ VoxelChunk::VoxelChunk(u32 w, u32 h, u32 d)
 
 	memset(blocks, 0, width*height*depth * sizeof(Block*));
 
-	vertexBO = faceBO = faceTex = 0;
 	numQuads = 0;
 	blocksDirty = false;
 	voxelsDirty = true;
@@ -44,15 +43,12 @@ VoxelChunk::VoxelChunk(u32 w, u32 h, u32 d)
 }
 
 VoxelChunk::~VoxelChunk() {
-	glDeleteBuffers(1, &vertexBO);
-	glDeleteBuffers(1, &faceBO);
-	glDeleteTextures(1, &faceTex);
-
 	delete[] geometryData;
-	delete[] occlusionData;
 	delete[] rotationData;
 	geometryData = nullptr;
 	rotationData = nullptr;
+
+	delete[] occlusionData;
 	occlusionData = nullptr;
 
 	if(numQuads){
@@ -145,56 +141,6 @@ void VoxelChunk::GenerateMesh() {
 		rigidbody->setCollisionShape(collider);
 		Physics::world->addRigidBody(rigidbody);
 	}
-}
-
-void VoxelChunk::UploadMesh() {
-	if(!numQuads) return;
-
-	auto manager = ChunkManager::Get();
-
-	if(!vertexBO) glGenBuffers(1, &vertexBO);
-	if(!faceBO) glGenBuffers(1, &faceBO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBO);
-	glBufferData(GL_ARRAY_BUFFER, numQuads*4*sizeof(u32), manager->vertexBuildBuffer, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	glBindBuffer(GL_TEXTURE_BUFFER, faceBO);
-	glBufferData(GL_TEXTURE_BUFFER, numQuads*sizeof(u32), manager->faceBuildBuffer, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_TEXTURE_BUFFER, 0);
-
-	if(!faceTex) {
-		glGenTextures(1, &faceTex);
-		glBindTexture(GL_TEXTURE_BUFFER, faceTex);
-		glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA8UI, faceBO);
-		glBindTexture(GL_TEXTURE_BUFFER, 0);
-	}
-}
-
-void VoxelChunk::Render(ShaderProgram* program) {
-	if(voxelsDirty) {
-		GenerateMesh();
-		UploadMesh();
-		voxelsDirty = false;
-	}
-
-	if(!numQuads) return;
-
-	QuadElementBuffer::SetNumQuads(numQuads);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBO);
-	glVertexAttribIPointer(0, 1, GL_UNSIGNED_INT, 4, nullptr);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_BUFFER, faceTex);
-	glUniform1i(program->GetUniform("facearray"), 0);
-
-	glUniformMatrix4fv(program->GetUniform("model"), 1, false, glm::value_ptr(modelMatrix));
-
-	QuadElementBuffer::Draw(numQuads);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindTexture(GL_TEXTURE_BUFFER, 0);
 }
 
 void VoxelChunk::Update() {
