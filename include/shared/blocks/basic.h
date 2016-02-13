@@ -82,10 +82,10 @@ struct ComputerBlock : DynamicBlock {
 	}
 };
 
-#include "shaderregistry.h"
-#include "textrendering.h"
-#include "camera.h"
-#include "debugdraw.h"
+#include "client/shaderregistry.h"
+#include "client/textrendering.h"
+#include "client/camera.h"
+#include "client/debugdraw.h"
 
 struct TextBlock : DynamicBlock {
 	static void PopulateBlockInfo(BlockInfo* bt) {

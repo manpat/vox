@@ -1,8 +1,8 @@
-#include "shaderregistry.h"
-#include "texturehelpers.h"
+#include "client/shaderregistry.h"
+#include "client/texturehelpers.h"
 #include "chunkmanager.h"
 #include "voxelchunk.h"
-#include "camera.h"
+#include "client/camera.h"
 #include "block.h"
 
 static Log logger{"ChunkManager"};

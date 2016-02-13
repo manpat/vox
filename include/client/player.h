@@ -8,7 +8,6 @@
 struct Camera;
 
 // TODO: Focus/interaction states
-// TODO: Fill in base methods
 
 struct Player : PlayerBase {
 	static constexpr f32 Height = 1.5f;

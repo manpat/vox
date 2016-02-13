@@ -155,12 +155,17 @@ What happens when a player interacts with a block?
 		gui sends further messages to server
 	ServerInteract does any actual logic
 
+Should dynamics have both a Client side and Server side representation?
+	Server doesn't need to know about text meshes
+	Client doesn't necessarily need to know the state/logic of all locks
+
 Client
 ------
 	All mesh related stuff
 	All rendering related stuff
 	All gui stuff?
 	LocalPlayer
+		Responsible for own simulation
 	NetworkedPlayer
 	Local physics
 
@@ -168,8 +173,12 @@ Shared
 ------
 	Neighborhood stuff
 	Chunk stuff
+		Both server and client need representations of chunks and neighborhoods
 	Block definitions
+		Client needs to know how to render, server needs to know what to update
 	PlayerBase
+
+	Physics simulation
 
 Server
 ------

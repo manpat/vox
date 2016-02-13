@@ -1,8 +1,8 @@
 #include "chunkmanager.h"
-#include "quadbuffer.h"
+#include "client/quadbuffer.h"
 #include "voxelchunk.h"
 #include "physics.h"
-#include "shader.h"
+#include "client/shader.h"
 #include "block.h"
 
 #include "stb_voxel_render.h"
