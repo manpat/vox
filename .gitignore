@@ -1,6 +1,6 @@
 build
-server
-client
+/server
+/client
 *.o
 out
 *.exe
