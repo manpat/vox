@@ -1,3 +1,4 @@
+#include "clientnetinterface.h"
 #include "chunkmanager.h"
 #include "localplayer.h"
 #include "voxelchunk.h"
@@ -18,8 +19,10 @@ struct PlayerMotionState : public btMotionState {
 		worldTrans.setOrigin(o2bt(cam->position - cameraOffset));
 	}
 	void setWorldTransform(const btTransform& newTrans) override {
-		auto pos = newTrans.getOrigin();
-		cam->position = bt2o(pos) + cameraOffset;
+		auto pos = bt2o(newTrans.getOrigin());
+		cam->position = pos + cameraOffset;
+
+		ClientNetInterface::UpdatePlayerState(pos, vec3{0}, quat{0,0,0,1});
 	}
 };
 

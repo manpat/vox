@@ -4,7 +4,10 @@
 #include "common.h"
 
 struct PlayerBase {
+	u16 playerID;
+
 	virtual void Update() {}
+	virtual void Render() {}
 
 	virtual vec3 GetPosition() { return vec3{0}; }
 	virtual vec3 GetVelocity() { return vec3{0}; }
@@ -32,7 +35,6 @@ struct PlayerBase {
 
 	// Get current tool/held item
 
-	// Player ID
 	// Admin?
 	// Team
 
