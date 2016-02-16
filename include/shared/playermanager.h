@@ -13,6 +13,9 @@ struct PlayerManager {
 	void AddPlayer(std::shared_ptr<PlayerBase>, u16 id);
 	void RemovePlayer(u16 id);
 	std::shared_ptr<PlayerBase> GetPlayer(u16 id);
+
+	void Update();
+	void Render();
 };
 
 #endif

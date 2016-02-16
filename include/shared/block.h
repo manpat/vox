@@ -18,6 +18,8 @@ struct BlockFactory {
 	virtual ~BlockFactory() {}
 };
 
+// TODO: Specialise this so non-dynamic blocks can be allocated
+//	from a pool
 template<class T>
 struct DefaultBlockFactory : BlockFactory {
 	T* Create() override {

@@ -12,7 +12,7 @@ struct ClientNetInterface {
 	static void SetPlayerName(const std::string&);
 	static void SetPlayerTeam(u8);
 	static void SetPlayerSector(u8);
-	static void SetBlock(u16 chunkID, ivec3 pos, u16 type);
+	static void SetBlock(u16 chunkID, ivec3 pos, u16 type, u8 orientation);
 };
 
 #endif

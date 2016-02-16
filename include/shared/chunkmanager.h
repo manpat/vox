@@ -10,6 +10,7 @@ struct VoxelChunk;
 struct ChunkNeighborhood {
 	std::vector<std::weak_ptr<VoxelChunk>> chunks;
 	ivec3 chunkSize;
+	// TODO: Neighborhood ID
 
 	void AddChunk(std::shared_ptr<VoxelChunk>);
 	void RemoveChunk(std::shared_ptr<VoxelChunk>);
@@ -23,7 +24,6 @@ struct ChunkManager {
 	std::vector<std::shared_ptr<ChunkNeighborhood>> neighborhoods;
 	u8* vertexBuildBuffer;
 	u8* faceBuildBuffer;
-	u32 chunkIDCounter;
 
 	std::vector<u8> voxelGeometryMap;
 
@@ -35,9 +35,12 @@ struct ChunkManager {
 	~ChunkManager();
 	void PopulateVoxelInfo();
 
-	// TODO: Reduce interface. The last two arguments aren't particularly useful in most cases
-	std::shared_ptr<VoxelChunk> CreateChunk(u32 w, u32 h, u32 d, vec3 position = vec3{0}, bool = false);
+	// NOTE: Client side created chunks WONT be syncronised unless instructed by server
+	std::shared_ptr<VoxelChunk> CreateChunk(u32 w, u32 h, u32 d);
 	std::shared_ptr<ChunkNeighborhood> CreateNeighborhood();
+
+	std::shared_ptr<VoxelChunk> GetChunk(u16 id);
+	void DestroyChunk(u16 id);
 
 	void Update();
 };

@@ -17,7 +17,6 @@ std::shared_ptr<ChunkManager> ChunkManager::Get() {
 ChunkManager::ChunkManager() {
 	vertexBuildBuffer = new u8[VertexBufferSize];
 	faceBuildBuffer = new u8[FaceBufferSize];
-	chunkIDCounter = 0;
 
 	PopulateVoxelInfo();
 
@@ -58,26 +57,14 @@ void ChunkManager::PopulateVoxelInfo() {
 	}
 }
 
-std::shared_ptr<VoxelChunk> ChunkManager::CreateChunk(u32 w, u32 h, u32 d, vec3 position, bool placeBlock) {
+std::shared_ptr<VoxelChunk> ChunkManager::CreateChunk(u32 w, u32 h, u32 d) {
 	auto nchunk = std::make_shared<VoxelChunk>(w,h,d);
 	chunks.push_back(nchunk);
 
-	if(placeBlock) {
-		ivec3 pos {
-			nchunk->width/2,
-			nchunk->height/2,
-			nchunk->depth/2,
-		};
-
-		nchunk->CreateBlock(pos, 1);
-	}
-
-	position.x += nchunk->width/-2.f -1;
-	position.y += nchunk->height/-2.f -1;
-	position.z += nchunk->depth/2.f +1;
-
-	nchunk->modelMatrix = glm::translate(position);
-	nchunk->chunkID = chunkIDCounter++;
+	// TODO: This is a hack so I can render client created chunks properly
+	//	All server chunks will be accompanied with actual chunk ids
+	nchunk->chunkID = rand()&0xffff;
+	nchunk->modelMatrix = mat4{1.f};
 	nchunk->self = nchunk;
 	return nchunk;
 }
@@ -92,6 +79,24 @@ void ChunkManager::Update() {
 	for(auto& vc: chunks) {
 		vc->Update();
 	}
+}
+
+std::shared_ptr<VoxelChunk> ChunkManager::GetChunk(u16 id) {
+	auto it = std::find_if(chunks.begin(), chunks.end(), [id](auto& ch) {
+		return id == ch->chunkID;
+	});
+
+	if(it == chunks.end()) return nullptr;
+	return *it;
+}
+
+void ChunkManager::DestroyChunk(u16 id) {
+	auto it = std::find_if(chunks.begin(), chunks.end(), [id](auto& ch) {
+		return id == ch->chunkID;
+	});
+
+	if(it == chunks.end()) return;
+	chunks.erase(it);
 }
 
 /*

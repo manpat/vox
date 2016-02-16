@@ -6,6 +6,7 @@
 #include <SDL2/SDL.h>
 
 struct OverlayManager;
+struct PlayerManager;
 struct ChunkManager;
 struct LocalPlayer;
 struct Network;
@@ -23,6 +24,7 @@ struct Client {
 	std::shared_ptr<Network> network;
 	std::shared_ptr<LocalPlayer> player;
 	std::shared_ptr<ChunkManager> chunkManager;
+	std::shared_ptr<PlayerManager> playerManager;
 	std::shared_ptr<OverlayManager> overlayManager;
 	std::shared_ptr<GUI> gui;
 

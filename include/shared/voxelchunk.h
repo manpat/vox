@@ -20,7 +20,7 @@ struct VoxelChunk {
 	u8* rotationData;
 	u8* occlusionData; // NOTE: Occlusion data not needed on server side
 	
-	u32 chunkID;
+	u16 chunkID;
 	u32 width, height, depth;
 	u32 numQuads;
 	bool voxelsDirty;

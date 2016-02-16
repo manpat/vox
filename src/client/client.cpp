@@ -11,10 +11,12 @@
 #include "voxelchunk.h"
 #include "localplayer.h"
 #include "chunkmanager.h"
+#include "playermanager.h"
 #include "chunkrenderer.h"
 #include "bullethelpers.h"
 #include "textrendering.h"
 #include "shaderregistry.h"
+#include "clientnetinterface.h"
 
 #include "overlays/playerinfo.h"
 
@@ -95,7 +97,16 @@ void Client::Init() {
 
 	Debug::Init();
 
+	for(u32 i = 0; i < 100 && !network->isConnected; i++) {
+		network->Update();
+		SDL_Delay(10);
+	}
+
+	if(!network->isConnected) throw "Connection failed";
+
 	player = std::make_shared<LocalPlayer>(camera);
+	playerManager = PlayerManager::Get();
+	playerManager->AddPlayer(player, 0);
 }
 
 void Client::Run() {
@@ -152,20 +163,16 @@ void Client::Run() {
 	panelText->proportions = vec2{8,8};
 
 	auto chunkRenderer = std::make_shared<ChunkRenderer>();
-
-	constexpr s32 startPlaneSize = 1;
 	auto startPlaneNeigh = chunkManager->CreateNeighborhood();
 
-	for(s32 cx = -startPlaneSize; cx <= startPlaneSize; cx++)
-	for(s32 cz = -startPlaneSize; cz <= startPlaneSize; cz++){
-		auto chunk = chunkManager->CreateChunk(30,30,10,vec3{cx*30,10,cz*30});
-		chunk->SetNeighborhood(startPlaneNeigh);
-		chunk->positionInNeighborhood = ivec3{cx, cz, 0};
+	auto chunk = chunkManager->CreateChunk(30,30,10);
+	chunk->modelMatrix = glm::translate(vec3{-15.f, -10.f, 15.f});
+	chunk->SetNeighborhood(startPlaneNeigh);
+	chunk->positionInNeighborhood = ivec3{0, 0, 0};
 
-		for(u32 y = 0; y < chunk->height; y++)
-		for(u32 x = 0; x < chunk->width; x++)
-			chunk->CreateBlock(ivec3{x,y,0}, 1);
-	}
+	for(u32 y = 0; y < chunk->height; y++)
+	for(u32 x = 0; x < chunk->width; x++)
+		chunk->CreateBlock(ivec3{x,y,0}, 1);
 
 	using std::chrono::duration;
 	using std::chrono::duration_cast;
@@ -179,7 +186,6 @@ void Client::Run() {
 	auto playerinfo = std::make_shared<PlayerInfoOverlay>(player);
 	overlayManager->Add(playerinfo);
 
-	u32 primCount = 0;
 	u32 primCountQuery;
 	glGenQueries(1, &primCountQuery);
 
@@ -213,7 +219,16 @@ void Client::Run() {
 			Input::doCapture ^= true;
 
 		if(Input::GetKeyDown(SDLK_n)) {
-			chunkManager->CreateChunk(11,11,11,camera->position + camera->forward*4.f, true);
+			auto ch = chunkManager->CreateChunk(11,11,11);
+
+			auto chpos = camera->position + camera->forward*4.f;
+			chpos.x += 11.f/-2.f -1;
+			chpos.y += 11.f/-2.f -1;
+			chpos.z += 11.f/ 2.f +1;
+			ch->modelMatrix = glm::translate(chpos);
+
+			auto vx = ch->WorldToVoxelSpace(camera->position + camera->forward*4.f);
+			ch->CreateBlock(vx, 1);
 		}
 
 		if(Input::GetKeyDown(SDLK_t)){
@@ -234,7 +249,7 @@ void Client::Run() {
 		else if(Input::GetButtonUp(Input::MouseLeft))
 			gui->InjectMouseButton(false);
 
-		player->Update();
+		playerManager->Update();
 		chunkManager->Update();
 		overlayManager->Update();
 		gui->Update();
@@ -246,7 +261,8 @@ void Client::Run() {
 
 		glBeginQuery(GL_PRIMITIVES_GENERATED, primCountQuery);
 
-		chunkRenderer->Render();
+		playerManager->Render();
+		chunkRenderer->Render(); 
 		overlayManager->Render();
 		gui->Render();
 
@@ -257,8 +273,7 @@ void Client::Run() {
 		SDL_GL_SwapWindow(window);
 		SDL_Delay(1);
 
-		glGetQueryObjectuiv(primCountQuery, GL_QUERY_RESULT, &primCount);
-		playerinfo->primCount = primCount;
+		glGetQueryObjectuiv(primCountQuery, GL_QUERY_RESULT, &playerinfo->primCount);
 
 		auto end = high_resolution_clock::now();
 		Time::dt = duration_cast<duration<f32>>(end-begin).count();

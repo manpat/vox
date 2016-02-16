@@ -130,17 +130,19 @@ void LocalPlayer::Update() {
 					}
 				}else{
 					if(Input::GetButtonDown(Input::MouseRight)){
-						chnk->DestroyBlock(vxpos);
+						ClientNetInterface::SetBlock(chnk->chunkID, vxpos, 0, 0);
 					}else{
-						if(!chnk->InBounds(vxpos)) {
-							auto nchnk = chnk->GetOrCreateNeighbor(chpos);
-							vxpos = nchnk->WorldToVoxelSpace(chpos);
+						// if(!chnk->InBounds(vxpos)) {
+						// 	auto nchnk = chnk->GetOrCreateNeighbor(chpos);
+						// 	vxpos = nchnk->WorldToVoxelSpace(chpos);
 
-							chnk = nchnk.get();
-						}
+						// 	chnk = nchnk.get();
+						// }
 
-						auto blk = chnk->CreateBlock(vxpos, blockType);
-						if(blk) blk->orientation = blockRot;
+						// auto blk = chnk->CreateBlock(vxpos, blockType);
+						// if(blk) blk->orientation = blockRot;
+
+						ClientNetInterface::SetBlock(chnk->chunkID, vxpos, blockType, blockRot);
 					}
 				}
 

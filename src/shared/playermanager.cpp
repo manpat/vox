@@ -34,3 +34,14 @@ std::shared_ptr<PlayerBase> PlayerManager::GetPlayer(u16 id) {
 	return *p;
 }
 
+void PlayerManager::Update() {
+	for(auto& p : players) {
+		p->Update();
+	}	
+}
+
+void PlayerManager::Render() {
+	for(auto& p : players) {
+		p->Render();
+	}
+}
