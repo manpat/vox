@@ -63,8 +63,10 @@ std::shared_ptr<VoxelChunk> ChunkManager::CreateChunk(u32 w, u32 h, u32 d) {
 
 	// TODO: This is a hack so I can render client created chunks properly
 	//	All server chunks will be accompanied with actual chunk ids
-	nchunk->chunkID = rand()&0xffff;
-	nchunk->modelMatrix = mat4{1.f};
+	// nchunk->chunkID = rand()&0xffff;
+	nchunk->chunkID = 0;
+	// nchunk->modelMatrix = mat4{1.f};
+	nchunk->position = vec3{0.f};
 	nchunk->self = nchunk;
 	return nchunk;
 }
@@ -97,6 +99,15 @@ void ChunkManager::DestroyChunk(u16 id) {
 
 	if(it == chunks.end()) return;
 	chunks.erase(it);
+}
+
+std::shared_ptr<ChunkNeighborhood> ChunkManager::GetNeighborhood(u16 id) {
+	auto it = std::find_if(neighborhoods.begin(), neighborhoods.end(), [id](auto& ch) {
+		return id == ch->neighborhoodID;
+	});
+
+	if(it == neighborhoods.end()) return nullptr;
+	return *it;
 }
 
 /*

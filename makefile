@@ -71,7 +71,7 @@ obj/shared/%.o: src/shared/%.cpp
 run: build
 	@echo "-- Running --"
 	@gnome-terminal --geometry=120x24 -e "./server" &
-	# @./client &
+	@./client &
 	@./client
 
 clean:

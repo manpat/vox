@@ -17,6 +17,7 @@ struct Server {
 	std::map<NetworkGUID, u16> guidToPlayerID;
 	u16 playerIDCount;
 	u16 chunkIDCount;
+	u16 neighborhoodIDCount;
 
 	void Run();
 

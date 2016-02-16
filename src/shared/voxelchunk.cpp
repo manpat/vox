@@ -29,7 +29,8 @@ VoxelChunk::VoxelChunk(u32 w, u32 h, u32 d)
 	blocksDirty = false;
 	voxelsDirty = true;
 
-	modelMatrix = mat4(1.f);
+	position = vec3{0.f};
+	// modelMatrix = mat4(1.f);
 
 	btScalar mass = 0.f;
 	btVector3 inertia {0,0,0};
@@ -158,7 +159,8 @@ void VoxelChunk::Update() {
 
 	// Update collider transform
 	btTransform worldTrans;
-	worldTrans.setFromOpenGLMatrix(glm::value_ptr(modelMatrix));
+	// worldTrans.setFromOpenGLMatrix(glm::value_ptr(modelMatrix));
+	worldTrans.setFromOpenGLMatrix(glm::value_ptr(glm::translate(position)));
 	rigidbody->setCenterOfMassTransform(worldTrans);
 }
 
@@ -242,7 +244,8 @@ std::shared_ptr<VoxelChunk> VoxelChunk::GetOrCreateNeighbor(vec3 position) {
 	else if(vxpos.y < 0) 			orthoDir = vec3{0,0,1};
 
 	auto chunk = manager->CreateChunk(width, height, depth);
-	chunk->modelMatrix = modelMatrix * glm::translate(orthoDir * vec3{width, depth, height});
+	// chunk->modelMatrix = modelMatrix * glm::translate(orthoDir * vec3{width, depth, height});
+	chunk->position = position + orthoDir * vec3{width, depth, height};
 	chunk->SetNeighborhood(neigh);
 
 	std::swap(orthoDir.y, orthoDir.z);
@@ -313,7 +316,8 @@ Block* VoxelChunk::GetBlock(ivec3 pos) {
 }
 
 ivec3 VoxelChunk::WorldToVoxelSpace(vec3 w) {
-	auto modelSpace = glm::inverse(modelMatrix) * vec4{w, 1};
+	// auto modelSpace = glm::inverse(modelMatrix) * vec4{w, 1};
+	auto modelSpace = w - position;
 	return ivec3 {
 		floor(modelSpace.x-1.f),
 		floor(-modelSpace.z-1.f),
@@ -322,8 +326,9 @@ ivec3 VoxelChunk::WorldToVoxelSpace(vec3 w) {
 }
 
 vec3 VoxelChunk::VoxelToWorldSpace(ivec3 v) {
-	vec4 modelSpace = vec4{v.x+1, v.z+1, -v.y-1, 1};
-	return vec3{modelMatrix * modelSpace};
+	auto modelSpace = vec3{v.x+1, v.z+1, -v.y-1};
+	// return vec3{modelMatrix * modelSpace};
+	return position + modelSpace;
 }
 
 bool VoxelChunk::InBounds(ivec3 p) {

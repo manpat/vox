@@ -21,15 +21,20 @@ void Server::Run() {
 	chunkManager = ChunkManager::Get();
 	playerManager = PlayerManager::Get();
 	playerIDCount = 0;
+	chunkIDCount = 0;
+	neighborhoodIDCount = 0;
 
 	constexpr s32 startPlaneSize = 1;
 	auto startPlaneNeigh = chunkManager->CreateNeighborhood();
+	startPlaneNeigh->neighborhoodID = ++neighborhoodIDCount;
 
 	for(s32 cx = -startPlaneSize; cx <= startPlaneSize; cx++)
 	for(s32 cz = -startPlaneSize; cz <= startPlaneSize; cz++){
 		auto chunk = chunkManager->CreateChunk(30,30,10);
 		chunk->SetNeighborhood(startPlaneNeigh);
 		chunk->positionInNeighborhood = ivec3{cx, cz, 0};
+		chunk->position = vec3{cx * 30.f, -10, -cz * 30.f};
+		chunk->chunkID = ++chunkIDCount;
 
 		for(u32 y = 0; y < chunk->height; y++)
 		for(u32 x = 0; x < chunk->width; x++)
@@ -74,6 +79,34 @@ void Server::OnPlayerConnect(NetworkGUID guid) {
 	packet.WriteType(PacketType::RemoteJoin);
 	packet.Write(playerID);
 	network->Broadcast(packet, guid);
+
+	for(auto& chunk: chunkManager->chunks) {
+		auto neigh = chunk->neighborhood.lock();
+
+		packet.Reset();
+		packet.WriteType(PacketType::NewChunk);
+		packet.Write(chunk->chunkID);
+		packet.Write<u16>(neigh?neigh->neighborhoodID:0);
+		packet.Write<u8>(chunk->width);
+		packet.Write<u8>(chunk->height);
+		packet.Write<u8>(chunk->depth);
+		packet.Write(chunk->position);
+
+		network->Send(packet, guid);
+	}
+
+	for(auto& chunk: chunkManager->chunks) {
+		auto neigh = chunk->neighborhood.lock();
+
+		packet.Reset();
+		packet.WriteType(PacketType::SetBlock);
+		packet.Write<u16>(chunk->chunkID);
+		packet.Write<ivec3>(ivec3{0,0,0});
+		packet.Write<u16>(1);
+		packet.Write<u8>(0);
+
+		network->Send(packet, guid);
+	}
 
 	// TODO: Send all the chunks
 }

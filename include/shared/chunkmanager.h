@@ -10,7 +10,7 @@ struct VoxelChunk;
 struct ChunkNeighborhood {
 	std::vector<std::weak_ptr<VoxelChunk>> chunks;
 	ivec3 chunkSize;
-	// TODO: Neighborhood ID
+	u16 neighborhoodID;
 
 	void AddChunk(std::shared_ptr<VoxelChunk>);
 	void RemoveChunk(std::shared_ptr<VoxelChunk>);
@@ -41,6 +41,8 @@ struct ChunkManager {
 
 	std::shared_ptr<VoxelChunk> GetChunk(u16 id);
 	void DestroyChunk(u16 id);
+
+	std::shared_ptr<ChunkNeighborhood> GetNeighborhood(u16 id);
 
 	void Update();
 };

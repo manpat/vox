@@ -98,7 +98,8 @@ void ChunkRenderer::Render() {
 		glBindTexture(GL_TEXTURE_BUFFER, infoMap->faceTex);
 		glUniform1i(program->GetUniform("facearray"), 0);
 
-		glUniformMatrix4fv(program->GetUniform("model"), 1, false, glm::value_ptr(vc->modelMatrix));
+		// glUniformMatrix4fv(program->GetUniform("model"), 1, false, glm::value_ptr(vc->modelMatrix));
+		glUniformMatrix4fv(program->GetUniform("model"), 1, false, glm::value_ptr(glm::translate(vc->position)));
 
 		QuadElementBuffer::Draw(vc->numQuads);
 	}

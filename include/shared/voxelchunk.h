@@ -26,7 +26,9 @@ struct VoxelChunk {
 	bool voxelsDirty;
 	bool blocksDirty;
 
-	mat4 modelMatrix;
+	vec3 position;
+	// Orientation
+	// mat4 modelMatrix;
 
 	std::weak_ptr<VoxelChunk> self;
 	std::weak_ptr<ChunkNeighborhood> neighborhood;

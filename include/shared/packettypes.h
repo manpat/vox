@@ -28,7 +28,7 @@ namespace PacketType {
 		SetBlock,
 
 		// [S->C] Notify of chunk stuff
-		// ChunkID, NeighborhoodID, size, position
+		// ChunkID, NeighborhoodID, size(u8,u8,u8), position, ...
 		NewChunk,
 
 		// ChunkID

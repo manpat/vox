@@ -163,16 +163,16 @@ void Client::Run() {
 	panelText->proportions = vec2{8,8};
 
 	auto chunkRenderer = std::make_shared<ChunkRenderer>();
-	auto startPlaneNeigh = chunkManager->CreateNeighborhood();
+	// auto startPlaneNeigh = chunkManager->CreateNeighborhood();
 
-	auto chunk = chunkManager->CreateChunk(30,30,10);
-	chunk->modelMatrix = glm::translate(vec3{-15.f, -10.f, 15.f});
-	chunk->SetNeighborhood(startPlaneNeigh);
-	chunk->positionInNeighborhood = ivec3{0, 0, 0};
+	// auto chunk = chunkManager->CreateChunk(30,30,10);
+	// chunk->modelMatrix = glm::translate(vec3{-15.f, -10.f, 15.f});
+	// chunk->SetNeighborhood(startPlaneNeigh);
+	// chunk->positionInNeighborhood = ivec3{0, 0, 0};
 
-	for(u32 y = 0; y < chunk->height; y++)
-	for(u32 x = 0; x < chunk->width; x++)
-		chunk->CreateBlock(ivec3{x,y,0}, 1);
+	// for(u32 y = 0; y < chunk->height; y++)
+	// for(u32 x = 0; x < chunk->width; x++)
+	// 	chunk->CreateBlock(ivec3{x,y,0}, 1);
 
 	using std::chrono::duration;
 	using std::chrono::duration_cast;
@@ -225,7 +225,8 @@ void Client::Run() {
 			chpos.x += 11.f/-2.f -1;
 			chpos.y += 11.f/-2.f -1;
 			chpos.z += 11.f/ 2.f +1;
-			ch->modelMatrix = glm::translate(chpos);
+			// ch->modelMatrix = glm::translate(chpos);
+			ch->position = chpos;
 
 			auto vx = ch->WorldToVoxelSpace(camera->position + camera->forward*4.f);
 			ch->CreateBlock(vx, 1);
