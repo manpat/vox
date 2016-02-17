@@ -84,7 +84,7 @@ void ClientNetInterface::Update(std::shared_ptr<Network> net) {
 				ch->position = position;
 				ch->chunkID = chunkID;
 
-				logger << "New chunk " << chunkID;
+				logger << "New chunk " << chunkID << " at " << position;
 			} break;
 
 			case PacketType::RemoveChunk: {
@@ -123,6 +123,29 @@ void ClientNetInterface::Update(std::shared_ptr<Network> net) {
 				}else{
 					ch->DestroyBlock(vxPos);
 				}
+			} break;
+
+			case PacketType::SetChunkNeighborhood: {
+				u16 chunkID, neighborhoodID;
+				packet.Read(chunkID);
+				packet.Read(neighborhoodID);
+
+				auto chmgr = ChunkManager::Get();
+				auto ch = chmgr->GetChunk(chunkID);
+				if(!ch) {
+					logger << "Server tried to set neighborhood of unknown chunk!";
+					break;
+				}
+
+				auto neigh = chmgr->GetNeighborhood(neighborhoodID);
+				if(!neigh) {
+					neigh = chmgr->CreateNeighborhood();
+					neigh->neighborhoodID = neighborhoodID;
+					neigh->chunkSize = ivec3{ch->width, ch->height, ch->depth};
+				}
+
+				ch->SetNeighborhood(neigh);
+				packet.Read<ivec3>(ch->positionInNeighborhood);
 			} break;
 
 			case PacketType::ChunkDownload: OnChunkDownload(packet); break;

@@ -3,6 +3,7 @@ build
 /client
 *.o
 out
+*.out
 *.exe
 *.sublime-project
 *.sublime-workspace

@@ -30,10 +30,14 @@ namespace PacketType {
 		// [S->C] Notify of chunk stuff
 		// ChunkID, NeighborhoodID, size(u8,u8,u8), position, ...
 		NewChunk,
-
 		// ChunkID
 		RemoveChunk,
 
+		// [S->C] Set the neighborhood of a chunk
+		// ChunkID, NeighborhoodID, Position in neighborhood
+		SetChunkNeighborhood,
+
+		// [S->C] Set some portion of a chunk
 		// ChunkID, u16 offset, u8 numBlocks, {blockID:14, orientation:2}...
 		// Limit 245 blocks per packet
 		// Assumes chunk size will never exceed 32x32x32

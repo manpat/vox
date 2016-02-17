@@ -28,6 +28,7 @@ struct Log {
 	};
 
 	static std::ofstream& GetLogFile();
+	static void SetLogFile(std::string);
 
 	// Members
 	const char* systemName = nullptr;

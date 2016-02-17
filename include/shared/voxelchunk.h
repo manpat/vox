@@ -46,7 +46,7 @@ struct VoxelChunk {
 	void Update();
 	void PostRender(); // Only called on client side
 
-	std::shared_ptr<VoxelChunk> GetOrCreateNeighbor(vec3 position);
+	std::shared_ptr<VoxelChunk> GetOrCreateNeighborContaining(ivec3 position);
 	void SetNeighborhood(std::shared_ptr<ChunkNeighborhood>);
 
 	Block* CreateBlock(ivec3, u16);

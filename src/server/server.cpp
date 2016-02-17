@@ -14,6 +14,8 @@ static Log logger{"Server"};
 using namespace std::chrono;
 
 void Server::Run() {
+	Log::SetLogFile("server.out");
+
 	network = Network::Get();
 	network->Init();
 	network->Host(16660, 10);
@@ -39,6 +41,9 @@ void Server::Run() {
 		for(u32 y = 0; y < chunk->height; y++)
 		for(u32 x = 0; x < chunk->width; x++)
 			chunk->CreateBlock(ivec3{x,y,0}, 1);
+
+		for(u32 z = 1; z < chunk->depth; z++)
+			chunk->CreateBlock(ivec3{12,12,z}, 3);
 	}
 
 	logger << "Init";
@@ -50,7 +55,6 @@ void Server::Run() {
 
 		while(network->GetPacket(&packet)) {
 			u8 type = packet.ReadType();
-			// logger << "Got packet " << (u32) type;
 
 			switch(type) {
 			case ID_NEW_INCOMING_CONNECTION: OnPlayerConnect(packet.fromGUID); break;
@@ -68,12 +72,15 @@ void Server::Run() {
 	}
 }
 
+#include <raknet/RakPeerInterface.h>
+
 void Server::OnPlayerConnect(NetworkGUID guid) {
 	u16 playerID = ++playerIDCount;
 	guidToPlayerID[guid] = playerID;
 	playerManager->AddPlayer(std::make_shared<ServerPlayer>(), playerID);
 
-	logger << "Client " << playerID << " connected [" << NetworkGUID::ToUint32(guid) << "]";
+	auto sa = network->peer->GetSystemAddressFromGuid(guid);
+	logger << "Client " << playerID << " connected [" << sa.ToString() << "]";
 
 	Packet packet;
 	packet.WriteType(PacketType::RemoteJoin);
@@ -81,22 +88,8 @@ void Server::OnPlayerConnect(NetworkGUID guid) {
 	network->Broadcast(packet, guid);
 
 	for(auto& chunk: chunkManager->chunks) {
-		auto neigh = chunk->neighborhood.lock();
-
-		packet.Reset();
-		packet.WriteType(PacketType::NewChunk);
-		packet.Write(chunk->chunkID);
-		packet.Write<u16>(neigh?neigh->neighborhoodID:0);
-		packet.Write<u8>(chunk->width);
-		packet.Write<u8>(chunk->height);
-		packet.Write<u8>(chunk->depth);
-		packet.Write(chunk->position);
-
-		network->Send(packet, guid);
-	}
-
-	for(auto& chunk: chunkManager->chunks) {
-		SendChunk(chunk, guid);
+		SendNewChunk(chunk, guid);
+		SendChunkContents(chunk, guid);
 	}
 }
 
@@ -166,12 +159,36 @@ void Server::OnSetBlock(Packet& p) {
 		return;
 	}
 
-	if(!ch->InBounds(vxPos)) {
-		// Create neighbor
-		// Notify clients
+	logger << "SetBlock [" << chunkID << "] " << vxPos;
 
-		logger << "!! Neighbor creation not implemented";
-		return;
+	if(!ch->InBounds(vxPos)) {
+		auto neigh = ch->neighborhood.lock();
+		if(!neigh) {
+			neigh = chunkManager->CreateNeighborhood();
+			neigh->neighborhoodID = ++neighborhoodIDCount;
+			ch->SetNeighborhood(neigh);
+			SendSetNeighborhood(ch);
+		}
+
+		auto nchunk = ch->GetOrCreateNeighborContaining(vxPos);
+		if(!nchunk) {
+			logger << "Neighbor chunk creation failed!";
+			return;
+		}
+
+		// If chunkID is zero, it must be new
+		if(!nchunk->chunkID){
+			nchunk->chunkID = ++chunkIDCount;
+			SendNewChunk(nchunk);
+		}
+
+		vec3 world = ch->VoxelToWorldSpace(vxPos);
+		vxPos = nchunk->WorldToVoxelSpace(world);
+
+		ch = nchunk;
+		chunkID = nchunk->chunkID;
+
+		logger << "SetBlock neigh [" << nchunk->chunkID << "] " << vxPos;
 	}
 
 	if(!blockType) {
@@ -179,7 +196,8 @@ void Server::OnSetBlock(Packet& p) {
 
 	}else{
 		auto block = ch->CreateBlock(vxPos, blockType);
-		block->orientation = orientation;
+		if(!block) logger << "Block creation failed for block type " << blockType;
+		else block->orientation = orientation;
 	}
 
 	// Packet needs to be copied because vxPos and chunkID can change
@@ -193,12 +211,34 @@ void Server::OnSetBlock(Packet& p) {
 	network->Broadcast(np);
 }
 
-// ChunkID, u16 offset, u8 numBlocks, {blockID:14, orientation:2}...
-// Limit 245 blocks per packet
+void Server::SendNewChunk(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid) {
+	auto neigh = vc->neighborhood.lock();
 
-void Server::SendChunk(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid) {
-	logger << "Sending chunk";
+	Packet packet;
+	packet.WriteType(PacketType::NewChunk);
+	packet.Write(vc->chunkID);
+	packet.Write<u16>(neigh?neigh->neighborhoodID:0);
+	packet.Write<u8>(vc->width);
+	packet.Write<u8>(vc->height);
+	packet.Write<u8>(vc->depth);
+	packet.Write(vc->position);
 
+	network->Send(packet, guid);
+}
+
+void Server::SendSetNeighborhood(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid) {
+	auto neigh = vc->neighborhood.lock();
+
+	Packet packet;
+	packet.WriteType(PacketType::SetChunkNeighborhood);
+	packet.Write(vc->chunkID);
+	packet.Write<u16>(neigh?neigh->neighborhoodID:0);
+	packet.Write(vc->positionInNeighborhood);
+
+	network->Send(packet, guid);
+}
+
+void Server::SendChunkContents(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid) {
 	if(vc->width > 32
 	|| vc->depth > 32
 	|| vc->height > 32) {

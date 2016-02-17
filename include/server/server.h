@@ -28,7 +28,10 @@ struct Server {
 	void OnPlayerStateUpdate(Packet&);
 	void OnSetBlock(Packet&);
 
-	void SendChunk(std::shared_ptr<VoxelChunk>, NetworkGUID);
+	// If guid is Unassigned, these broadcast
+	void SendNewChunk(std::shared_ptr<VoxelChunk>, NetworkGUID = RakNet::UNASSIGNED_RAKNET_GUID);
+	void SendChunkContents(std::shared_ptr<VoxelChunk>, NetworkGUID = RakNet::UNASSIGNED_RAKNET_GUID);
+	void SendSetNeighborhood(std::shared_ptr<VoxelChunk>, NetworkGUID = RakNet::UNASSIGNED_RAKNET_GUID);
 };
 
 

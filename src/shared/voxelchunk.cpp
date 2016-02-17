@@ -215,16 +215,20 @@ void VoxelChunk::PostRender() {
 	}
 }
 
-std::shared_ptr<VoxelChunk> VoxelChunk::GetOrCreateNeighbor(vec3 position) {
+std::shared_ptr<VoxelChunk> VoxelChunk::GetOrCreateNeighborContaining(ivec3 vxpos) {
 	auto manager = ChunkManager::Get();
 	std::shared_ptr<ChunkNeighborhood> neigh;
 
 	if(neigh = neighborhood.lock()) {
+		vec3 world = VoxelToWorldSpace(vxpos);
+
+		// TODO: It might be a good idea to use positionInNeighborhood for this
+		// Low priority as this won't get called often
 		for(auto& n: neigh->chunks) {
 			auto ch = n.lock();
 			if(!ch) continue;
 
-			auto vxpos = ch->WorldToVoxelSpace(position);
+			auto vxpos = ch->WorldToVoxelSpace(world);
 			if(ch->InBounds(vxpos)) return ch;
 		}
 	}else{
@@ -232,7 +236,6 @@ std::shared_ptr<VoxelChunk> VoxelChunk::GetOrCreateNeighbor(vec3 position) {
 		SetNeighborhood(neigh);
 	}
 
-	auto vxpos = WorldToVoxelSpace(position);
 	vec3 orthoDir {0};
 
 	if(vxpos.x >=(s32)width) 		orthoDir = vec3{1,0,0};
@@ -325,7 +328,6 @@ Block* VoxelChunk::GetBlock(ivec3 pos) {
 }
 
 ivec3 VoxelChunk::WorldToVoxelSpace(vec3 w) {
-	// auto modelSpace = glm::inverse(modelMatrix) * vec4{w, 1};
 	auto modelSpace = w - position;
 	return ivec3 {
 		floor(modelSpace.x-1.f),
@@ -336,7 +338,6 @@ ivec3 VoxelChunk::WorldToVoxelSpace(vec3 w) {
 
 vec3 VoxelChunk::VoxelToWorldSpace(ivec3 v) {
 	auto modelSpace = vec3{v.x+1, v.z+1, -v.y-1};
-	// return vec3{modelMatrix * modelSpace};
 	return position + modelSpace;
 }
 

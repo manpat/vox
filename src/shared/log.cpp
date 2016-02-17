@@ -11,6 +11,13 @@ std::ofstream& Log::GetLogFile() {
 	return file;
 }
 
+void Log::SetLogFile(std::string nfile) {
+	auto& file = GetLogFile();
+	file.close();
+	file.open(nfile);
+}
+
+
 // Proxy
 
 Log::Proxy::Proxy(Log* l) : log{l} {
