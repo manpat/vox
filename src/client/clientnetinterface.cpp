@@ -9,6 +9,8 @@
 
 static Log logger{"ClientNetInterface"};
 
+static void OnChunkDownload(Packet&);
+
 void ClientNetInterface::Update(std::shared_ptr<Network> net) {
 	net->Update();
 
@@ -104,7 +106,9 @@ void ClientNetInterface::Update(std::shared_ptr<Network> net) {
 				packet.Read(chunkID);
 				packet.Read<ivec3>(vxPos);
 				packet.Read(blockType);
-				packet.Read(orientation);
+
+				orientation = blockType & 3;
+				blockType >>= 2;
 
 				auto ch = chmgr->GetChunk(chunkID);
 				if(!ch) {
@@ -120,6 +124,8 @@ void ClientNetInterface::Update(std::shared_ptr<Network> net) {
 					ch->DestroyBlock(vxPos);
 				}
 			} break;
+
+			case PacketType::ChunkDownload: OnChunkDownload(packet); break;
 		}
 	}
 }
@@ -153,10 +159,53 @@ void ClientNetInterface::SetBlock(u16 chunkID, ivec3 pos, u16 type, u8 orientati
 	packet.WriteType(PacketType::SetBlock);
 	packet.Write(chunkID);
 	packet.Write(pos);
-	packet.Write(type);
-	packet.Write(orientation);
+	packet.Write<u16>(type << 2 | orientation);
 
 	auto net = Network::Get();
 	net->Send(packet);
 }
 
+
+void OnChunkDownload(Packet& p) {
+	u16 chunkID, offset;
+	u8 size;
+
+	p.Read(chunkID);
+	p.Read(offset);
+	p.Read(size);
+
+	auto chmgr = ChunkManager::Get();
+	auto ch = chmgr->GetChunk(chunkID);
+	if(!ch) {
+		logger << "Downloading chunk that doesn't exist";
+		return;
+	}
+
+	u8 w = ch->width;
+	u8 h = ch->height;
+	u8 d = ch->depth;
+
+	u8 x, y, z;
+	z = offset % d;
+	y = (offset / d) % h;
+	x = (offset / d / h) % w;
+
+	for(u8 i = 0; i < size; i++) {
+		u16 blockType;
+		p.Read(blockType);
+
+		u8 orientation = blockType&3;
+		blockType >>= 2;
+
+		auto blk = ch->CreateBlock(ivec3{x,y,z}, blockType);
+		if(blk) blk->orientation = orientation;
+
+		if(++z >= d) {
+			if(++y >= h) {
+				++x; // No check because it should never happen
+				y = 0;
+			}
+			z = 0;
+		}
+	}
+}

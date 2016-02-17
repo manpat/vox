@@ -273,6 +273,15 @@ Block* VoxelChunk::CreateBlock(ivec3 pos, u16 id) {
 	auto factory = BlockRegistry::blocks[id-1].factory;
 	if(!factory) throw "Block " + std::to_string(id+1) + " missing factory";
 
+	// TODO: Is this good enough?
+	// If a block already exists destroy it
+	if(auto block = blocks[idx]) {
+		if(auto dyn = block->AsDynamic())
+			dyn->OnBreak();
+
+		delete block;
+	}
+
 	auto block = factory->Create();
 	blocks[idx] = block;
 	block->orientation = 0;

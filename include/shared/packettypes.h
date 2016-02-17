@@ -24,7 +24,7 @@ namespace PacketType {
 		SetPlayerSector,
 
 		// [S<>C] Notify of a single block change
-		// ChunkID, vx position, blockID, orientation
+		// ChunkID, vx position, blockID:14, orientation:2
 		SetBlock,
 
 		// [S->C] Notify of chunk stuff
@@ -33,6 +33,11 @@ namespace PacketType {
 
 		// ChunkID
 		RemoveChunk,
+
+		// ChunkID, u16 offset, u8 numBlocks, {blockID:14, orientation:2}...
+		// Limit 245 blocks per packet
+		// Assumes chunk size will never exceed 32x32x32
+		ChunkDownload,
 	};
 }
 

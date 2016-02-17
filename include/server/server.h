@@ -9,6 +9,7 @@
 
 struct PlayerManager;
 struct ChunkManager;
+struct VoxelChunk;
 
 struct Server {
 	std::shared_ptr<PlayerManager> playerManager;
@@ -26,6 +27,8 @@ struct Server {
 	void OnPlayerLostConnection(NetworkGUID);
 	void OnPlayerStateUpdate(Packet&);
 	void OnSetBlock(Packet&);
+
+	void SendChunk(std::shared_ptr<VoxelChunk>, NetworkGUID);
 };
 
 

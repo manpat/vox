@@ -30,10 +30,10 @@ void Server::Run() {
 
 	for(s32 cx = -startPlaneSize; cx <= startPlaneSize; cx++)
 	for(s32 cz = -startPlaneSize; cz <= startPlaneSize; cz++){
-		auto chunk = chunkManager->CreateChunk(30,30,10);
+		auto chunk = chunkManager->CreateChunk(24,24,24);
 		chunk->SetNeighborhood(startPlaneNeigh);
 		chunk->positionInNeighborhood = ivec3{cx, cz, 0};
-		chunk->position = vec3{cx * 30.f, -10, -cz * 30.f};
+		chunk->position = vec3{cx * 24.f, -24, -cz * 24.f};
 		chunk->chunkID = ++chunkIDCount;
 
 		for(u32 y = 0; y < chunk->height; y++)
@@ -96,19 +96,8 @@ void Server::OnPlayerConnect(NetworkGUID guid) {
 	}
 
 	for(auto& chunk: chunkManager->chunks) {
-		auto neigh = chunk->neighborhood.lock();
-
-		packet.Reset();
-		packet.WriteType(PacketType::SetBlock);
-		packet.Write<u16>(chunk->chunkID);
-		packet.Write<ivec3>(ivec3{0,0,0});
-		packet.Write<u16>(1);
-		packet.Write<u8>(0);
-
-		network->Send(packet, guid);
+		SendChunk(chunk, guid);
 	}
-
-	// TODO: Send all the chunks
 }
 
 void Server::OnPlayerDisonnect(NetworkGUID guid) {
@@ -167,7 +156,9 @@ void Server::OnSetBlock(Packet& p) {
 	p.Read(chunkID);
 	p.Read(vxPos);
 	p.Read(blockType);
-	p.Read(orientation);
+
+	orientation = blockType & 3;
+	blockType >>= 2;
 
 	auto ch = chunkManager->GetChunk(chunkID);
 	if(!ch) {
@@ -196,9 +187,75 @@ void Server::OnSetBlock(Packet& p) {
 	np.WriteType(PacketType::SetBlock);
 	np.Write(chunkID);
 	np.Write(vxPos);
-	np.Write(blockType);
-	np.Write(orientation);
+	np.Write<u16>(blockType << 2 | orientation);
 
 	// Send to all including sender
 	network->Broadcast(np);
+}
+
+// ChunkID, u16 offset, u8 numBlocks, {blockID:14, orientation:2}...
+// Limit 245 blocks per packet
+
+void Server::SendChunk(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid) {
+	logger << "Sending chunk";
+
+	if(vc->width > 32
+	|| vc->depth > 32
+	|| vc->height > 32) {
+		logger << "Cannot send chunks of size > 32x32x32";
+		return;
+	}
+
+	constexpr u16 blockLimit = 245;
+
+	Packet p;
+	auto blocks = vc->blocks;
+	u16 w = vc->width;
+	u16 h = vc->height;
+	u16 d = vc->depth;
+	u16 numBlocks = w*h*d;
+	std::vector<u16> packetInfo(numBlocks, 0);
+
+	for(u16 i = 0; i < numBlocks; i++) {
+		auto b = blocks[i];
+		if(!b) continue;
+
+		auto bID = b->info->blockID;
+		packetInfo[i] = bID << 2 | (b->orientation & 3);
+	}
+
+	// TODO: Compression could happen here
+
+	u16 remaining = numBlocks;
+	while(remaining >= blockLimit) {
+		u16 offset = numBlocks - remaining;
+
+		p.Reset();
+		p.WriteType(PacketType::ChunkDownload);
+		p.Write<u16>(vc->chunkID);
+		p.Write<u16>(offset);
+		p.Write<u8>(blockLimit);
+
+		for(u16 i = 0; i < blockLimit; i++)
+			p.Write<u16>(packetInfo[i+offset]);
+
+		network->Send(p, guid);
+
+		remaining -= blockLimit;
+	}
+
+	if(remaining > 0) {
+		u16 offset = numBlocks - remaining;
+
+		p.Reset();
+		p.WriteType(PacketType::ChunkDownload);
+		p.Write<u16>(vc->chunkID);
+		p.Write<u16>(offset);
+		p.Write<u8>(remaining);
+
+		for(u16 i = 0; i < remaining; i++)
+			p.Write<u16>(packetInfo[i+offset]);
+
+		network->Send(p, guid);
+	}
 }

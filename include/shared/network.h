@@ -23,6 +23,7 @@ namespace RakNet {
 struct Packet {
 	RakNet::BitStream bitstream;
 	NetworkGUID fromGUID;
+	// TODO: priority, reliablility
 
 	Packet();
 	Packet(Packet&&);

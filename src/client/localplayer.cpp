@@ -86,6 +86,7 @@ void LocalPlayer::Update() {
 		rigidbody->setLinearVelocity(o2bt(vel));
 	}
 	
+	// TODO: Limit send rate - probably doesn't need to be sent every 16ms
 	ClientNetInterface::UpdatePlayerState(camera->position, vec3{0}, camera->rotation);
 
 	camera->UpdateMatrices();
