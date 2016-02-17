@@ -9,7 +9,14 @@
 
 static Log logger{"ClientNetInterface"};
 
+static void OnUpdatePlayerState(Packet&);
+
+static void OnNewChunk(Packet&);
+static void OnRemoveChunk(Packet&);
+
+static void OnSetBlock(Packet&);
 static void OnChunkDownload(Packet&);
+static void OnSetChunkNeighborhood(Packet&);
 
 void ClientNetInterface::Update(std::shared_ptr<Network> net) {
 	net->Update();
@@ -19,28 +26,6 @@ void ClientNetInterface::Update(std::shared_ptr<Network> net) {
 		u8 type = packet.ReadType();
 
 		switch(type) {
-			case PacketType::UpdatePlayerState: {
-				vec3 pos, vel;
-				quat ori;
-				u16 playerID;
-
-				packet.Read<u16>(playerID);
-				packet.Read(pos);
-				packet.Read(vel);
-				packet.Read(ori);
-
-				auto pmgr = PlayerManager::Get();
-				auto player = pmgr->GetPlayer(playerID);
-				if(!player) {
-					player = std::make_shared<NetPlayer>();
-					pmgr->AddPlayer(player, playerID);
-				}
-
-				player->SetPosition(pos);
-				player->SetVelocity(vel);
-				player->SetOrientation(ori);
-			} break;
-
 			case PacketType::RemoteJoin: {
 				u16 playerID;
 				packet.Read<u16>(playerID);
@@ -57,97 +42,13 @@ void ClientNetInterface::Update(std::shared_ptr<Network> net) {
 				pmgr->RemovePlayer(playerID);
 			} break;
 
-			case PacketType::NewChunk: {
-				auto chmgr = ChunkManager::Get();
-				u16 chunkID;
-				u16 neighborhoodID;
-				u8 w,h,d;
-				vec3 position;
+			case PacketType::UpdatePlayerState: OnPlayerStateUpdate(packet); break;
 
-				packet.Read(chunkID);
-				packet.Read(neighborhoodID);
-				packet.Read(w);
-				packet.Read(h);
-				packet.Read(d);
-				packet.Read(position);
+			case PacketType::NewChunk: OnNewChunk(packet); break;
+			case PacketType::RemoveChunk: OnRemoveChunk(packet); break;
 
-				auto neigh = chmgr->GetNeighborhood(neighborhoodID);
-				if(!neigh) {
-					neigh = chmgr->CreateNeighborhood();
-					neigh->neighborhoodID = neighborhoodID;
-					neigh->chunkSize = ivec3{w,h,d};
-				}
-
-				auto ch = chmgr->CreateChunk(w,h,d);
-				ch->SetNeighborhood(neigh);
-				// ch->modelMatrix = glm::translate(position);
-				ch->position = position;
-				ch->chunkID = chunkID;
-
-				logger << "New chunk " << chunkID << " at " << position;
-			} break;
-
-			case PacketType::RemoveChunk: {
-				auto chmgr = ChunkManager::Get();
-
-				u16 chunkID;
-				packet.Read(chunkID);
-
-				chmgr->DestroyChunk(chunkID);
-			} break;
-
-			case PacketType::SetBlock: {
-				auto chmgr = ChunkManager::Get();
-				u8 orientation;
-				u16 chunkID, blockType;
-				ivec3 vxPos;
-
-				// Assume vxPos is in bounds
-				packet.Read(chunkID);
-				packet.Read<ivec3>(vxPos);
-				packet.Read(blockType);
-
-				orientation = blockType & 3;
-				blockType >>= 2;
-
-				auto ch = chmgr->GetChunk(chunkID);
-				if(!ch) {
-					logger << "Missing chunkID " << chunkID;
-					return;
-				}
-
-				if(blockType) {
-					auto blk = ch->CreateBlock(vxPos, blockType);
-					if(blk) blk->orientation = orientation;
-					else logger << "Block create failed";
-				}else{
-					ch->DestroyBlock(vxPos);
-				}
-			} break;
-
-			case PacketType::SetChunkNeighborhood: {
-				u16 chunkID, neighborhoodID;
-				packet.Read(chunkID);
-				packet.Read(neighborhoodID);
-
-				auto chmgr = ChunkManager::Get();
-				auto ch = chmgr->GetChunk(chunkID);
-				if(!ch) {
-					logger << "Server tried to set neighborhood of unknown chunk!";
-					break;
-				}
-
-				auto neigh = chmgr->GetNeighborhood(neighborhoodID);
-				if(!neigh) {
-					neigh = chmgr->CreateNeighborhood();
-					neigh->neighborhoodID = neighborhoodID;
-					neigh->chunkSize = ivec3{ch->width, ch->height, ch->depth};
-				}
-
-				ch->SetNeighborhood(neigh);
-				packet.Read<ivec3>(ch->positionInNeighborhood);
-			} break;
-
+			case PacketType::SetBlock: OnSetBlock(packet); break;
+			case PacketType::SetChunkNeighborhood: OnSetChunkNeighborhood(packet); break;
 			case PacketType::ChunkDownload: OnChunkDownload(packet); break;
 		}
 	}
@@ -188,6 +89,96 @@ void ClientNetInterface::SetBlock(u16 chunkID, ivec3 pos, u16 type, u8 orientati
 	net->Send(packet);
 }
 
+
+void OnUpdatePlayerState(Packet& packet) {
+	vec3 pos, vel;
+	quat ori;
+	u16 playerID;
+
+	packet.Read<u16>(playerID);
+	packet.Read(pos);
+	packet.Read(vel);
+	packet.Read(ori);
+
+	auto pmgr = PlayerManager::Get();
+	auto player = pmgr->GetPlayer(playerID);
+	if(!player) {
+		player = std::make_shared<NetPlayer>();
+		pmgr->AddPlayer(player, playerID);
+	}
+
+	player->SetPosition(pos);
+	player->SetVelocity(vel);
+	player->SetOrientation(ori);
+}
+
+void OnNewChunk(Packet& packet) {
+	auto chmgr = ChunkManager::Get();
+	u16 chunkID;
+	u16 neighborhoodID;
+	u8 w,h,d;
+	vec3 position;
+
+	packet.Read(chunkID);
+	packet.Read(neighborhoodID);
+	packet.Read(w);
+	packet.Read(h);
+	packet.Read(d);
+	packet.Read(position);
+
+	auto neigh = chmgr->GetNeighborhood(neighborhoodID);
+	if(!neigh) {
+		neigh = chmgr->CreateNeighborhood();
+		neigh->neighborhoodID = neighborhoodID;
+		neigh->chunkSize = ivec3{w,h,d};
+	}
+
+	auto ch = chmgr->CreateChunk(w,h,d);
+	ch->SetNeighborhood(neigh);
+	// ch->modelMatrix = glm::translate(position);
+	ch->position = position;
+	ch->chunkID = chunkID;
+
+	logger << "New chunk " << chunkID << " at " << position;
+}
+
+void OnRemoveChunk(Packet& packet) {
+	auto chmgr = ChunkManager::Get();
+
+	u16 chunkID;
+	packet.Read(chunkID);
+
+	chmgr->DestroyChunk(chunkID);
+}
+
+void OnSetBlock(Packet& packet) {
+	auto chmgr = ChunkManager::Get();
+	u8 orientation;
+	u16 chunkID, blockType;
+	ivec3 vxPos;
+
+	// Assume vxPos is in bounds
+	packet.Read(chunkID);
+	packet.Read<ivec3>(vxPos);
+	packet.Read(blockType);
+
+	orientation = blockType & 3;
+	blockType >>= 2;
+
+	auto ch = chmgr->GetChunk(chunkID);
+	if(!ch) {
+		logger << "Missing chunkID " << chunkID;
+		return;
+	}
+
+	if(blockType) {
+		auto blk = ch->CreateBlock(vxPos, blockType);
+		if(blk) blk->orientation = orientation;
+		else logger << "Block create failed";
+	}else{
+		ch->DestroyBlock(vxPos);
+	}
+}
 
 void OnChunkDownload(Packet& p) {
 	u16 chunkID, offset;
@@ -231,4 +222,27 @@ void OnChunkDownload(Packet& p) {
 			z = 0;
 		}
 	}
+}
+
+void OnSetChunkNeighborhood(Packet& packet) {
+	u16 chunkID, neighborhoodID;
+	packet.Read(chunkID);
+	packet.Read(neighborhoodID);
+
+	auto chmgr = ChunkManager::Get();
+	auto ch = chmgr->GetChunk(chunkID);
+	if(!ch) {
+		logger << "Server tried to set neighborhood of unknown chunk!";
+		break;
+	}
+
+	auto neigh = chmgr->GetNeighborhood(neighborhoodID);
+	if(!neigh) {
+		neigh = chmgr->CreateNeighborhood();
+		neigh->neighborhoodID = neighborhoodID;
+		neigh->chunkSize = ivec3{ch->width, ch->height, ch->depth};
+	}
+
+	ch->SetNeighborhood(neigh);
+	packet.Read<ivec3>(ch->positionInNeighborhood);
 }

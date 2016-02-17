@@ -187,8 +187,6 @@ void Server::OnSetBlock(Packet& p) {
 
 		ch = nchunk;
 		chunkID = nchunk->chunkID;
-
-		logger << "SetBlock neigh [" << nchunk->chunkID << "] " << vxPos;
 	}
 
 	if(!blockType) {
