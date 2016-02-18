@@ -5,6 +5,7 @@
 #include "packettypes.h"
 #include <raknet/BitStream.h>
 #include <raknet/RakNetTypes.h>
+#include <raknet/PacketPriority.h>
 #include <type_traits>
 #include <queue>
 
@@ -23,7 +24,8 @@ namespace RakNet {
 struct Packet {
 	RakNet::BitStream bitstream;
 	NetworkGUID fromGUID;
-	// TODO: priority, reliablility
+	PacketPriority priority = HIGH_PRIORITY;
+	PacketReliability reliability = RELIABLE;
 
 	Packet();
 	Packet(Packet&&);

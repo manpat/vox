@@ -15,6 +15,7 @@ struct BlockInfo;
 struct BlockFactory {
 	BlockInfo* blockInfo;
 	virtual Block* Create() = 0;
+	virtual void Destroy(Block*) = 0;
 	virtual ~BlockFactory() {}
 };
 
@@ -26,6 +27,10 @@ struct DefaultBlockFactory : BlockFactory {
 		auto bl = new T;
 		bl->info = blockInfo;
 		return bl;
+	}
+
+	void Destroy(Block* t) override {
+		delete static_cast<T*>(t);
 	}
 };
 
@@ -56,6 +61,7 @@ struct Block {
 	// Tint?
 
 	DynamicBlock* AsDynamic();
+	BlockFactory* GetFactory();
 };
 
 struct DynamicBlock : Block {
@@ -76,22 +82,29 @@ struct DynamicBlock : Block {
 };
 
 struct BlockRegistry {
-	static std::array<BlockInfo, 256> blocks;
-	static u16 blockInfoCount;
+	static constexpr u32 MaxBlockInfoCount = 512;
+
+	std::array<BlockInfo, MaxBlockInfoCount> blocks;
+	u16 blockInfoCount = 0;
+
+	static BlockRegistry* Get();
+	static BlockInfo* AllocateBlockInfo();
+	static BlockInfo* GetBlockInfo(u16 blockID);
+
+	static bool IsValidID(u16 blockID);
 };
 
-template<class B, class F = DefaultBlockFactory<B>>
+template<class B, template<class> class F = DefaultBlockFactory>
 struct BlockRegisterer {
 	BlockInfo* bi;
 
 	BlockRegisterer() {
-		bi = &BlockRegistry::blocks[BlockRegistry::blockInfoCount];
-		bi->blockID = BlockRegistry::blockInfoCount+1;
-		bi->factory = new F;
+		bi = BlockRegistry::AllocateBlockInfo();
+
+		bi->factory = new F<B>;
 		bi->factory->blockInfo = bi;
 
 		B::PopulateBlockInfo(bi);
-		BlockRegistry::blockInfoCount++;
 
 		if(bi->dynamic)
 			Log("BlockRegisterer") << "Registered new dynamic block type: " << bi->name;

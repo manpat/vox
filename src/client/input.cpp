@@ -7,6 +7,7 @@ std::map<s32,u8> Input::mouseStates;
 vec2 Input::mouseDelta = vec2{0.f};
 vec2 Input::mousePos = vec2{0.f};
 bool Input::doCapture = true;
+bool Input::hasFocus = false;
 
 Input::MappedCode Input::mappings[MappingName::Count] = {
 	// Keyboard, Mouse
@@ -51,7 +52,7 @@ void Input::Update(SDL_Window* window){
 	ww &= ~1;
 	wh &= ~1;
 
-	if(doCapture){	
+	if(doCapture && hasFocus){
 		mouseDelta.x = mx / static_cast<f32>(ww) * 2.f - 1.f;
 		mouseDelta.y =-my / static_cast<f32>(wh) * 2.f + 1.f;
 

@@ -42,7 +42,7 @@ void ClientNetInterface::Update(std::shared_ptr<Network> net) {
 				pmgr->RemovePlayer(playerID);
 			} break;
 
-			case PacketType::UpdatePlayerState: OnPlayerStateUpdate(packet); break;
+			case PacketType::UpdatePlayerState: OnUpdatePlayerState(packet); break;
 
 			case PacketType::NewChunk: OnNewChunk(packet); break;
 			case PacketType::RemoveChunk: OnRemoveChunk(packet); break;
@@ -61,6 +61,9 @@ void ClientNetInterface::UpdatePlayerState(vec3 p, vec3 v, quat o) {
 	packet.Write<vec3>(p);
 	packet.Write<vec3>(v);
 	packet.Write(o);
+
+	packet.reliability = UNRELIABLE_SEQUENCED;
+	packet.priority = MEDIUM_PRIORITY;
 
 	auto net = Network::Get();
 	net->Send(packet);
@@ -233,7 +236,7 @@ void OnSetChunkNeighborhood(Packet& packet) {
 	auto ch = chmgr->GetChunk(chunkID);
 	if(!ch) {
 		logger << "Server tried to set neighborhood of unknown chunk!";
-		break;
+		return;
 	}
 
 	auto neigh = chmgr->GetNeighborhood(neighborhoodID);

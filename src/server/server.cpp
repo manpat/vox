@@ -26,7 +26,7 @@ void Server::Run() {
 	chunkIDCount = 0;
 	neighborhoodIDCount = 0;
 
-	constexpr s32 startPlaneSize = 1;
+	constexpr s32 startPlaneSize = 3;
 	auto startPlaneNeigh = chunkManager->CreateNeighborhood();
 	startPlaneNeigh->neighborhoodID = ++neighborhoodIDCount;
 
@@ -89,6 +89,11 @@ void Server::OnPlayerConnect(NetworkGUID guid) {
 
 	for(auto& chunk: chunkManager->chunks) {
 		SendNewChunk(chunk, guid);
+	}
+
+	// NOTE: If a ChunkDownload packet arrives before its corresponding
+	//	NewChunk packet, it will be discarded on the client side
+	for(auto& chunk: chunkManager->chunks){
 		SendChunkContents(chunk, guid);
 	}
 }
@@ -110,6 +115,10 @@ void Server::OnPlayerLostConnection(NetworkGUID guid) {
 	// playerID 0 is invalid
 	auto playerID = guidToPlayerID[guid];
 	if(!playerID) return;
+
+	Packet packet;
+	packet.WriteType(PacketType::RemoteLeave);
+	packet.Write(playerID);
 
 	logger << "Client " << playerID << " lost connection";
 }
@@ -159,8 +168,6 @@ void Server::OnSetBlock(Packet& p) {
 		return;
 	}
 
-	logger << "SetBlock [" << chunkID << "] " << vxPos;
-
 	if(!ch->InBounds(vxPos)) {
 		auto neigh = ch->neighborhood.lock();
 		if(!neigh) {
@@ -205,6 +212,8 @@ void Server::OnSetBlock(Packet& p) {
 	np.Write(vxPos);
 	np.Write<u16>(blockType << 2 | orientation);
 
+	np.reliability = RELIABLE_ORDERED;
+
 	// Send to all including sender
 	network->Broadcast(np);
 }
@@ -221,6 +230,7 @@ void Server::SendNewChunk(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid) {
 	packet.Write<u8>(vc->depth);
 	packet.Write(vc->position);
 
+	packet.reliability = RELIABLE_ORDERED;
 	network->Send(packet, guid);
 }
 
@@ -246,7 +256,6 @@ void Server::SendChunkContents(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid)
 
 	constexpr u16 blockLimit = 245;
 
-	Packet p;
 	auto blocks = vc->blocks;
 	u16 w = vc->width;
 	u16 h = vc->height;
@@ -263,6 +272,9 @@ void Server::SendChunkContents(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid)
 	}
 
 	// TODO: Compression could happen here
+
+	Packet p;
+	p.reliability = RELIABLE_ORDERED;
 
 	u16 remaining = numBlocks;
 	while(remaining >= blockLimit) {

@@ -24,10 +24,12 @@ ChunkRenderer::ChunkRenderer() {
 
 	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 
+	auto blockRegistry = BlockRegistry::Get();
+
 	// Init voxel texture info
 	voxelTextures = {0,0,0,0,0,0};
-	for(u16 i = 0; i < BlockRegistry::blockInfoCount; i++) {
-		auto& bt = BlockRegistry::blocks[i];
+	for(u16 i = 0; i < blockRegistry->blockInfoCount; i++) {
+		auto& bt = blockRegistry->blocks[i];
 
 		voxelTextures.insert(voxelTextures.end(), bt.textures.begin(), bt.textures.end());
 		if(bt.RequiresIDsForRotations()){

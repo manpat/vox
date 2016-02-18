@@ -35,11 +35,13 @@ struct PlayerInfoOverlay : Overlay {
 		};
 
 		auto chmgr = ChunkManager::Get();
+		auto blockInfo = BlockRegistry::GetBlockInfo(player->blockType);
+		auto blockName = blockInfo? blockInfo->name: "<invalid block>";
 
 		std::ostringstream ss;
 		ss << (s32)fps << '\n';
 		ss << playerRotStrings[player->blockRot] << '\n';
-		ss << ((!player->blockType)?"interact":BlockRegistry::blocks[player->blockType-1].name) << '\n';
+		ss << ((!player->blockType)?"interact":blockName) << '\n';
 		ss << "#chunks: " << chmgr->chunks.size() << '\n';
 
 		u64 estBlocks = 0;

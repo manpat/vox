@@ -77,13 +77,13 @@ void Network::Send(const Packet& p, NetworkGUID to) {
 	if(!isConnected && !isHosting) throw "Tried to send while not connected";
 
 	bool broadcast = (to == RakNet::UNASSIGNED_RAKNET_GUID);
-	peer->Send(&p.bitstream, HIGH_PRIORITY, RELIABLE, 0, to, broadcast);
+	peer->Send(&p.bitstream, p.priority, p.reliability, 0, to, broadcast);
 }
 
 void Network::Broadcast(const Packet& p, NetworkGUID excl) {
 	if(!isHosting) throw "Can't broadcast while not hosting";
 
-	peer->Send(&p.bitstream, HIGH_PRIORITY, RELIABLE, 0, excl, true);
+	peer->Send(&p.bitstream, p.priority, p.reliability, 0, excl, true);
 }
 
 bool Network::GetPacket(Packet* p) {

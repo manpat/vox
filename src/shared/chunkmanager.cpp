@@ -42,8 +42,10 @@ void ChunkManager::PopulateVoxelInfo() {
 	voxelGeometryMap = {STBVOX_MAKE_GEOMETRY(STBVOX_GEOM_empty, 0, 0)};
 	u16 id = 1;
 
-	for(u16 i = 0; i < BlockRegistry::blockInfoCount; i++) {
-		auto& bt = BlockRegistry::blocks[i];
+	auto blockRegistry = BlockRegistry::Get();
+
+	for(u16 i = 0; i < blockRegistry->blockInfoCount; i++) {
+		auto& bt = blockRegistry->blocks[i];
 		bt.voxelID = id++;
 
 		voxelGeometryMap.push_back(STBVOX_MAKE_GEOMETRY(voxelGeomMap[bt.geometry], 0, 0));

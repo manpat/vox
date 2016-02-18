@@ -163,16 +163,6 @@ void Client::Run() {
 	panelText->proportions = vec2{8,8};
 
 	auto chunkRenderer = std::make_shared<ChunkRenderer>();
-	// auto startPlaneNeigh = chunkManager->CreateNeighborhood();
-
-	// auto chunk = chunkManager->CreateChunk(30,30,10);
-	// chunk->modelMatrix = glm::translate(vec3{-15.f, -10.f, 15.f});
-	// chunk->SetNeighborhood(startPlaneNeigh);
-	// chunk->positionInNeighborhood = ivec3{0, 0, 0};
-
-	// for(u32 y = 0; y < chunk->height; y++)
-	// for(u32 x = 0; x < chunk->width; x++)
-	// 	chunk->CreateBlock(ivec3{x,y,0}, 1);
 
 	using std::chrono::duration;
 	using std::chrono::duration_cast;
@@ -204,7 +194,13 @@ void Client::Run() {
 
 				case SDL_MOUSEBUTTONDOWN:
 				case SDL_MOUSEBUTTONUP: 
+					Input::hasFocus = true;
 					Input::NotifyButtonStateChange(e.button.button, e.button.state == SDL_PRESSED);
+					break;
+
+				case SDL_WINDOWEVENT:
+					if(e.window.event == SDL_WINDOWEVENT_FOCUS_LOST)
+						Input::hasFocus = false;
 					break;
 			}
 		}
@@ -214,9 +210,9 @@ void Client::Run() {
 		if(Input::GetKeyDown(SDLK_ESCAPE))
 			running = false;
 
-		// Toggle snapping mouse to center
+		// Relinquish focus
 		if(Input::GetKeyDown(SDLK_F2))
-			Input::doCapture ^= true;
+			Input::hasFocus = false;
 
 		if(Input::GetKeyDown(SDLK_n)) {
 			auto ch = chunkManager->CreateChunk(11,11,11);

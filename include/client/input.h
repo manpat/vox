@@ -55,6 +55,7 @@ public:
 	static MappedCode mappings[MappingName::Count];
 
 	static bool doCapture;
+	static bool hasFocus;
 
 	// Returns mouse delta since last frame
 	static vec2 GetMouseDelta();

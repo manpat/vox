@@ -270,11 +270,14 @@ void VoxelChunk::SetNeighborhood(std::shared_ptr<ChunkNeighborhood> n) {
 
 Block* VoxelChunk::CreateBlock(ivec3 pos, u16 id) {
 	if(!InBounds(pos)) return nullptr;
-	if(!id || id-1 >= BlockRegistry::blockInfoCount) return nullptr;
+
+	auto blockInfo = BlockRegistry::GetBlockInfo(id);
+	if(!blockInfo) return nullptr;
+
+	auto factory = blockInfo->factory;
+	if(!factory) throw "Block " + std::to_string(id+1) + " missing factory";
 
 	auto idx = pos.z + pos.y*depth + pos.x*depth*height;
-	auto factory = BlockRegistry::blocks[id-1].factory;
-	if(!factory) throw "Block " + std::to_string(id+1) + " missing factory";
 
 	// TODO: Is this good enough?
 	// If a block already exists destroy it
@@ -282,7 +285,10 @@ Block* VoxelChunk::CreateBlock(ivec3 pos, u16 id) {
 		if(auto dyn = block->AsDynamic())
 			dyn->OnBreak();
 
-		delete block;
+		auto factory = block->GetFactory();
+		if(factory) {
+			factory->Destroy(block);
+		}
 	}
 
 	auto block = factory->Create();
@@ -312,9 +318,16 @@ void VoxelChunk::DestroyBlock(ivec3 pos) {
 	if(block) {
 		if(auto dyn = block->AsDynamic())
 			dyn->OnBreak();
+
+		auto factory = block->GetFactory();
+		if(factory) {
+			factory->Destroy(block);
+		}else{
+			logger << "Tried to destroy block with no factory!";
+			logger << (block->info? block->info->name : "<null blockinfo>");
+		}
 	}
 
-	delete block;
 	block = nullptr;
 
 	blocksDirty = true;
