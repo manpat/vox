@@ -1,11 +1,14 @@
 #include "block.h"
 #include "blocks/basic.h"
 
-BlockRegisterer<SteelBlock> steelBlock;
-BlockRegisterer<SteelSlab> steelSlab;
-BlockRegisterer<LightThingBlock> lightThingBlock;
-BlockRegisterer<RampBlock> rampBlock;
-BlockRegisterer<PoleBlock> poleBlock;
+auto decoBlocks = {
+	DecoBlockRegisterer {"steel", 		GeometryType::Cube, {0,0,0,0,0,0}, true},
+	DecoBlockRegisterer {"steelslab", 	GeometryType::Slab, {0,0,0,0,0,0}, true},
+
+	DecoBlockRegisterer {"lightthing", 	GeometryType::Cube, {1,1,1,1,1,1}, true},
+	DecoBlockRegisterer {"ramp",		GeometryType::Slope,{0,0,0,0,4,0}, true},
+	DecoBlockRegisterer {"pole",		GeometryType::Cross,{2,2,2,2,2,2}, false},
+};
 
 // BlockRegisterer<ComputerBlock> computerBlock;
 // BlockRegisterer<TextBlock> textBlock;

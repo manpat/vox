@@ -5,56 +5,6 @@
 #include "common.h"
 #include "block.h"
 
-struct SteelBlock : Block {
-	static void PopulateBlockInfo(BlockInfo* bt) {
-		bt->name = "steel";
-		bt->geometry = GeometryType::Cube;
-		bt->textures = {0,0,0,0,0,0};
-		bt->dynamic = false;
-		bt->doesOcclude = true;
-	}
-};
-
-struct SteelSlab : Block {
-	static void PopulateBlockInfo(BlockInfo* bt) {
-		bt->name = "steelslab";
-		bt->geometry = GeometryType::Slab;
-		bt->textures = {0,0,0,0,0,0};
-		bt->dynamic = false;
-		bt->doesOcclude = true;
-	}
-};
-
-struct LightThingBlock : Block {
-	static void PopulateBlockInfo(BlockInfo* bt) {
-		bt->name = "lightthing";
-		bt->geometry = GeometryType::Cube;
-		bt->textures = {1,1,1,1,1,1};
-		bt->dynamic = false;
-		bt->doesOcclude = true;
-	}
-};
-
-struct RampBlock : Block {
-	static void PopulateBlockInfo(BlockInfo* bt) {
-		bt->name = "ramp";
-		bt->geometry = GeometryType::Slope;
-		bt->textures = {0,0,0,0,4,0};
-		bt->dynamic = false;
-		bt->doesOcclude = true;
-	}
-};
-
-struct PoleBlock : Block {
-	static void PopulateBlockInfo(BlockInfo* bt) {
-		bt->name = "pole";
-		bt->geometry = GeometryType::Cross;
-		bt->textures = {2,2,2,2,2,2};
-		bt->dynamic = false;
-		bt->doesOcclude = false;
-	}
-};
-
 // struct ComputerBlock : DynamicBlock {
 // 	static void PopulateBlockInfo(BlockInfo* bt) {
 // 		bt->name = "computer";

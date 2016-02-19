@@ -118,4 +118,31 @@ struct BlockRegisterer {
 	}
 };
 
+struct DecoBlockRegisterer {
+	BlockInfo* bi;
+
+	DecoBlockRegisterer(std::string name, GeometryType geometry, 
+		std::array<u8, 6> textures, bool doesOcclude) {
+
+		bi = BlockRegistry::AllocateBlockInfo();
+		
+		// TODO: Use static pool for all deco blocks
+		bi->factory = new DefaultBlockFactory<Block>;
+		bi->factory->blockInfo = bi;
+
+		bi->name = name;
+		bi->geometry = geometry;
+		bi->textures = textures;
+		bi->doesOcclude = doesOcclude;
+		bi->dynamic = false;
+
+		Log("DecoBlockRegisterer") << "Registered new block type: " << bi->name;
+	}
+
+	~DecoBlockRegisterer() {
+		delete bi->factory;
+		bi->factory = nullptr;
+	}
+};
+
 #endif

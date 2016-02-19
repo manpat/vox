@@ -158,7 +158,7 @@ What happens when a player interacts with a block?
 		gui sends further messages to server
 	ServerInteract does any actual logic
 
-Should dynamics have both a Client side and Server side representation?
+Should dynamic blocks have both a Client side and Server side representation?
 	Server doesn't need to know about text meshes
 	Client doesn't necessarily need to know the state/logic of all locks
 
@@ -202,4 +202,24 @@ Server
 
 	Block update
 
+
+
+
+Possible blocks and requirements
+================================
+
+Computer
+--------
+	Client side
+		GUI, text input
+
+		Needs to know when a player interacts with it
+		Needs state updates from server side while interacting
+
+	Server side
+		Virtual machine, ports
+
+		Needs to accept text input from client side
+		Needs to interact with virtual machine and send state to client
+		Needs to handle interactions on ports
 

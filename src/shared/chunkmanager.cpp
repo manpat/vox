@@ -63,11 +63,7 @@ std::shared_ptr<VoxelChunk> ChunkManager::CreateChunk(u32 w, u32 h, u32 d) {
 	auto nchunk = std::make_shared<VoxelChunk>(w,h,d);
 	chunks.push_back(nchunk);
 
-	// TODO: This is a hack so I can render client created chunks properly
-	//	All server chunks will be accompanied with actual chunk ids
-	// nchunk->chunkID = rand()&0xffff;
 	nchunk->chunkID = 0;
-	// nchunk->modelMatrix = mat4{1.f};
 	nchunk->position = vec3{0.f};
 	nchunk->self = nchunk;
 	return nchunk;
