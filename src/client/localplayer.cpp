@@ -61,20 +61,19 @@ void LocalPlayer::Update() {
 		Input::GetMapped(Input::Backward) - Input::GetMapped(Input::Forward), 0
 	};
 
+	quat forwardRot;
 	if(noclip){
-		quat rot;
-		rot = glm::angleAxis(-camRot.y, vec3{0,1,0});
-		rot = rot * glm::angleAxis(-camRot.x, vec3{1,0,0});
+		forwardRot = glm::angleAxis(-camRot.y, vec3{0,1,0});
+		quat rot = forwardRot * glm::angleAxis(-camRot.x, vec3{1,0,0});
 
 		inputDir = rot * inputDir;
 		camera->position += vec3(inputDir) * Time::dt * 6.f * (1.f + Input::GetMapped(Input::Boost)*3.f);
 		camera->rotation = rot;
 	}else{
-		quat rot;
-		rot = glm::angleAxis(-camRot.y, vec3{0,1,0});
+		forwardRot = glm::angleAxis(-camRot.y, vec3{0,1,0});
 
-		camera->rotation = rot * glm::angleAxis(-camRot.x, vec3{1,0,0});
-		inputDir = rot * inputDir;
+		camera->rotation = forwardRot * glm::angleAxis(-camRot.x, vec3{1,0,0});
+		inputDir = forwardRot * inputDir;
 
 		auto vel = vec3(inputDir);
 		vel = vel * 6.f * (1.f + Input::GetMapped(Input::Boost)*3.f);
@@ -125,15 +124,31 @@ void LocalPlayer::Update() {
 
 				if(!blockType) {
 					auto blk = chnk->GetBlock(vxpos);
-					if(blk) {
-						if(auto dyn = blk->AsDynamic())
-							dyn->OnInteract();
+					if(blk && blk->AsDynamic()) {
+						ClientNetInterface::DoInteract(chnk->chunkID, vxpos);
 					}
 				}else{
 					if(Input::GetButtonDown(Input::MouseRight)){
 						ClientNetInterface::SetBlock(chnk->chunkID, vxpos, 0, 0);
 					}else{
-						ClientNetInterface::SetBlock(chnk->chunkID, vxpos, blockType, blockRot);
+						// This takes the players forward and converts it into 
+						//	a block rotation relative to the chunk
+
+						auto chnkFwd = chnk->rotation * vec3{0,0,-1};
+						auto chnkRgt = chnk->rotation * vec3{1,0,0};
+						auto plyFwd = camera->rotation * vec3{0,0,-1};
+
+						auto chu = glm::dot(chnkFwd, plyFwd);
+						auto chv = glm::dot(chnkRgt, plyFwd);
+
+						u8 blkRot = 0;
+						if(glm::abs(chu) > glm::abs(chv)) {
+							blkRot = (chu <= 0)<<1;
+						}else{
+							blkRot = ((chv <= 0)<<1) + 1;
+						}
+
+						ClientNetInterface::SetBlock(chnk->chunkID, vxpos, blockType, (blkRot + blockRot)&3);
 					}
 				}
 

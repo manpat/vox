@@ -9,6 +9,7 @@
 
 static Log logger{"ClientNetInterface"};
 
+// Messages from server
 static void OnUpdatePlayerState(Packet&);
 
 static void OnNewChunk(Packet&);
@@ -70,15 +71,15 @@ void ClientNetInterface::UpdatePlayerState(vec3 p, vec3 v, quat o) {
 }
 
 void ClientNetInterface::SetPlayerName(const std::string&) {
-
+	// TODO
 }
 
 void ClientNetInterface::SetPlayerTeam(u8) {
-
+	// TODO
 }
 
 void ClientNetInterface::SetPlayerSector(u8) {
-
+	// TODO
 }
 
 void ClientNetInterface::SetBlock(u16 chunkID, ivec3 pos, u16 type, u8 orientation) {
@@ -88,11 +89,32 @@ void ClientNetInterface::SetBlock(u16 chunkID, ivec3 pos, u16 type, u8 orientati
 	packet.Write(pos);
 	packet.Write<u16>(type << 2 | orientation);
 
-	auto net = Network::Get();
-	net->Send(packet);
+	Network::Get()->Send(packet);
+}
+
+void ClientNetInterface::DoInteract(u16 chunkID, ivec3 pos) {
+	Packet packet;
+	packet.WriteType(PacketType::PlayerInteract);
+	packet.Write(chunkID);
+	packet.Write(pos);
+
+	Network::Get()->Send(packet);
 }
 
 
+/*
+	                                                                                                             
+	 ad88888ba                                                          88b           d88                        
+	d8"     "8b                                                         888b         d888                        
+	Y8,                                                                 88`8b       d8'88                        
+	`Y8aaaaa,    ,adPPYba, 8b,dPPYba, 8b       d8  ,adPPYba, 8b,dPPYba, 88 `8b     d8' 88 ,adPPYba,  ,adPPYb,d8  
+	  `"""""8b, a8P_____88 88P'   "Y8 `8b     d8' a8P_____88 88P'   "Y8 88  `8b   d8'  88 I8[    "" a8"    `Y88  
+	        `8b 8PP""""""" 88          `8b   d8'  8PP""""""" 88         88   `8b d8'   88  `"Y8ba,  8b       88  
+	Y8a     a8P "8b,   ,aa 88           `8b,d8'   "8b,   ,aa 88         88    `888'    88 aa    ]8I "8a,   ,d88  
+	 "Y88888P"   `"Ybbd8"' 88             "8"      `"Ybbd8"' 88         88     `8'     88 `"YbbdP"'  `"YbbdP"Y8  
+	                                                                                                 aa,    ,88  
+	                                                                                                  "Y8bbdP"   
+*/
 void OnUpdatePlayerState(Packet& packet) {
 	vec3 pos, vel;
 	quat ori;
@@ -138,11 +160,10 @@ void OnNewChunk(Packet& packet) {
 
 	auto ch = chmgr->CreateChunk(w,h,d);
 	ch->SetNeighborhood(neigh);
-	// ch->modelMatrix = glm::translate(position);
 	ch->position = position;
 	ch->chunkID = chunkID;
 
-	logger << "New chunk " << chunkID << " at " << position;
+	// logger << "New chunk " << chunkID << " at " << position;
 }
 
 void OnRemoveChunk(Packet& packet) {

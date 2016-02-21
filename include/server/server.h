@@ -27,6 +27,7 @@ struct Server {
 	void OnPlayerLostConnection(NetworkGUID);
 	void OnPlayerStateUpdate(Packet&);
 	void OnSetBlock(Packet&);
+	void OnInteract(Packet&);
 
 	// If guid is Unassigned, these broadcast
 	void SendNewChunk(std::shared_ptr<VoxelChunk>, NetworkGUID = RakNet::UNASSIGNED_RAKNET_GUID);

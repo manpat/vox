@@ -42,6 +42,10 @@ namespace PacketType {
 		// Limit 245 blocks per packet
 		// Assumes chunk size will never exceed 32x32x32
 		ChunkDownload,
+
+		// [S<-C] Inform server of block interaction
+		// ChunkID, x:5, y:5, z:5
+		PlayerInteract,
 	};
 }
 

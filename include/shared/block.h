@@ -70,8 +70,14 @@ struct DynamicBlock : Block {
 	
 	virtual ~DynamicBlock() {};
 
+	// Shared
 	virtual void Update() {}
+	virtual void OnMessage() {};
+
+	// Clientside
 	virtual void PostRender() {}
+
+	// Serverside
 	virtual void OnPlace() {}
 	virtual void OnBreak() {}
 	virtual void OnInteract() {}
@@ -126,7 +132,7 @@ struct DecoBlockRegisterer {
 
 		bi = BlockRegistry::AllocateBlockInfo();
 		
-		// TODO: Use static pool for all deco blocks
+		// TODO: Use single static pool for all deco blocks
 		bi->factory = new DefaultBlockFactory<Block>;
 		bi->factory->blockInfo = bi;
 

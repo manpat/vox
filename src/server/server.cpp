@@ -63,6 +63,7 @@ void Server::Run() {
 
 			case PacketType::UpdatePlayerState: OnPlayerStateUpdate(packet); break;
 			case PacketType::SetBlock: OnSetBlock(packet); break;
+			case PacketType::PlayerInteract: OnInteract(packet); break;
 			}
 		}
 
@@ -216,6 +217,28 @@ void Server::OnSetBlock(Packet& p) {
 
 	// Send to all including sender
 	network->Broadcast(np);
+}
+
+void Server::OnInteract(Packet& p) {
+	u16 chunkID;
+	ivec3 vxPos;
+
+	p.Read(chunkID);
+	p.Read(vxPos);
+
+	auto ch = chunkManager->GetChunk(chunkID);
+	if(!ch) {
+		logger << "Player trying to interact with non-existent chunk";
+		return;
+	}
+
+	auto blk = ch->GetBlock(vxPos);
+	if(!blk) {
+		logger << "Player trying to interact with non-existent block";
+	}
+
+	if(auto dyn = blk->AsDynamic())
+		dyn->OnInteract();
 }
 
 void Server::SendNewChunk(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid) {

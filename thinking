@@ -9,13 +9,23 @@ Computer -> ComputerBlock // to change tint/textures or some shit
 Computer -> ComputerGUI
 Computer -> vm state and port states
 
+// Server
+ComputerBlock::OnPlace()
+	Create and Register Computer
+	Notify players in range of new computer
+ComputerBlock::OnBreak()
+	Deregister and destroy computer
+	Notify players in range of computer destruction
+ComputerBlock::OnInteract()
+	Attach player to computer
+
 
 Need GUI helpers to make shit not terrible
 	buttons n' stuff
 	info about gui things
 	centralised way to get focus
 
-ComputerGUI : Overlay
+ComputerGUI 
 
 Computer : ThingWithPorts
 
@@ -213,13 +223,76 @@ Computer
 	Client side
 		GUI, text input
 
-		Needs to know when a player interacts with it
 		Needs state updates from server side while interacting
+
+		OnServerMessage - Set screen state
 
 	Server side
 		Virtual machine, ports
 
+		Needs to know if a player is attached
 		Needs to accept text input from client side
 		Needs to interact with virtual machine and send state to client
+		Needs to know when a player interacts with it
 		Needs to handle interactions on ports
 
+		Update - Do VM and port stuff
+		OnInteract - Attach player
+		OnClientMessage - Send data to vm
+
+
+TP pad
+------
+	Server side
+		Ports
+		Needs to be able to set players positions
+
+
+Use cases for a player
+======================
+Connect to a server
+Quit game
+Join/change team
+Set name
+
+States
+	Walking
+	InCapturingGUI - Don't move with wasd; Don't capture mouse; Send input to GUI
+	Piloting - Don't move with wasd; Send input to vehicle
+
+Place blocks, break blocks
+Interact with dynamic blocks
+
+Change tools/modes
+
+Modes/tools
+	Normal mode
+		Cannot break blocks w/o weapons or explosives, if they exist
+
+	Wire mode
+		Has overlay that shows current connections and availale ports
+		Allows linking ports of dynamic blocks
+		Allow placing of buttons, lights?
+
+	Pipe mode?
+		If there are going to be resources that need piping, then this would
+		be for that
+		Similar to wire mode
+
+	Build mode 
+		Allows placing and removing of blocks
+		Has gui element that shows selected block type/orientation
+		Has hotbar/psuedo-inventory á la creative mode space engineers
+
+Create/Build ship
+Pilot ship
+Walk around in moving ship
+
+Go to different sector
+
+Download visible chunks on join server and when changing sector
+
+
+-----------
+
+Wired networks should be confined to a neighborhood

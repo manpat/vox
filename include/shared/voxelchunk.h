@@ -27,6 +27,7 @@ struct VoxelChunk {
 	bool blocksDirty;
 
 	vec3 position;
+	quat rotation;
 	// Orientation
 	// mat4 modelMatrix;
 

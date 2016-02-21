@@ -5,6 +5,21 @@
 #include "common.h"
 #include "block.h"
 
+struct TestDynamicBlock : DynamicBlock {
+ 	static void PopulateBlockInfo(BlockInfo* bt) {
+		bt->name = "testdynamic";
+		bt->geometry = GeometryType::Cube;
+		bt->textures = {0,0,0,3,0,0};
+		bt->dynamic = true;
+		bt->doesOcclude = true;
+	}
+
+	void OnMessage() override {};
+	void OnInteract() override {
+		Log("TestDynamicBlock") << "OnInteract";
+	}
+};
+
 // struct ComputerBlock : DynamicBlock {
 // 	static void PopulateBlockInfo(BlockInfo* bt) {
 // 		bt->name = "computer";

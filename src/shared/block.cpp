@@ -12,6 +12,7 @@ auto decoBlocks = {
 
 // BlockRegisterer<ComputerBlock> computerBlock;
 // BlockRegisterer<TextBlock> textBlock;
+BlockRegisterer<TestDynamicBlock> testDynamicBlock;
 
 BlockRegistry* BlockRegistry::Get() {
 	static BlockRegistry blockRegistry;
