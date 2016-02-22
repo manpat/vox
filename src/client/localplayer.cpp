@@ -115,11 +115,12 @@ void LocalPlayer::Update() {
 			// TODO: Change this
 			// It will explode as soon as we start using the user pointers for other things
 			if(auto chnk = (VoxelChunk*)col->getUserPointer()) {
+				auto normal = raycastResult.normal;
 
 				if(Input::GetButtonDown(Input::MouseRight) || !blockType)
-					raycastResult.normal = -raycastResult.normal;
+					normal = -normal;
 
-				auto chpos = raycastResult.position + raycastResult.normal * 0.1f;
+				auto chpos = raycastResult.position + normal * 0.1f;
 				auto vxpos = chnk->WorldToVoxelSpace(chpos);
 
 				if(!blockType) {
@@ -135,11 +136,18 @@ void LocalPlayer::Update() {
 						//	a block rotation relative to the chunk
 
 						auto chnkFwd = chnk->rotation * vec3{0,0,-1};
+						auto chnkUp = chnk->rotation * vec3{0,1,0};
 						auto chnkRgt = chnk->rotation * vec3{1,0,0};
 						auto plyFwd = camera->rotation * vec3{0,0,-1};
 
-						auto chu = glm::dot(chnkFwd, plyFwd);
-						auto chv = glm::dot(chnkRgt, plyFwd);
+						// If raycast normal is perpendicular to the up of the 
+						//	chunk, rotate such that player look direction is block north
+						// Otherwise, rotate based on normal such that
+						//	 the north faces -normal
+						bool upPerpendicular = glm::abs(glm::dot(normal, chnkUp)) > 0.707f;
+
+						auto chu = glm::dot(chnkFwd, upPerpendicular?plyFwd:-normal);
+						auto chv = glm::dot(chnkRgt, upPerpendicular?plyFwd:-normal);
 
 						u8 blkRot = 0;
 						if(glm::abs(chu) > glm::abs(chv)) {
