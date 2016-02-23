@@ -7,6 +7,7 @@
 
 #include <map>
 
+struct ChunkNeighborhood;
 struct PlayerManager;
 struct ChunkManager;
 struct VoxelChunk;
@@ -33,6 +34,8 @@ struct Server {
 	void SendNewChunk(std::shared_ptr<VoxelChunk>, NetworkGUID = RakNet::UNASSIGNED_RAKNET_GUID);
 	void SendChunkContents(std::shared_ptr<VoxelChunk>, NetworkGUID = RakNet::UNASSIGNED_RAKNET_GUID);
 	void SendSetNeighborhood(std::shared_ptr<VoxelChunk>, NetworkGUID = RakNet::UNASSIGNED_RAKNET_GUID);
+
+	void SendNeighborhoodTransform(std::shared_ptr<ChunkNeighborhood>, NetworkGUID = RakNet::UNASSIGNED_RAKNET_GUID);
 };
 
 

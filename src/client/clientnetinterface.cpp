@@ -18,6 +18,7 @@ static void OnRemoveChunk(Packet&);
 static void OnSetBlock(Packet&);
 static void OnChunkDownload(Packet&);
 static void OnSetChunkNeighborhood(Packet&);
+static void OnSetNeighborhoodTransform(Packet&);
 
 void ClientNetInterface::Update(std::shared_ptr<Network> net) {
 	net->Update();
@@ -51,6 +52,7 @@ void ClientNetInterface::Update(std::shared_ptr<Network> net) {
 			case PacketType::SetBlock: OnSetBlock(packet); break;
 			case PacketType::SetChunkNeighborhood: OnSetChunkNeighborhood(packet); break;
 			case PacketType::ChunkDownload: OnChunkDownload(packet); break;
+			case PacketType::SetNeighborhoodTransform: OnSetNeighborhoodTransform(packet); break;
 		}
 	}
 }
@@ -279,3 +281,25 @@ void OnSetChunkNeighborhood(Packet& packet) {
 	ch->SetNeighborhood(neigh);
 	packet.Read<ivec3>(ch->positionInNeighborhood);
 }
+
+void OnSetNeighborhoodTransform(Packet& packet) {
+	u16 neighID;
+	vec3 pos;
+	quat rot;
+
+	packet.Read(neighID);
+	packet.Read(pos);
+	packet.Read(rot);
+
+	auto chmgr = ChunkManager::Get();
+	auto neigh = chmgr->GetNeighborhood(neighID);
+	if(!neigh) {
+		logger << "Server tried to update transform of non-existent neighborhood";
+		return;
+	}
+
+	neigh->position = pos;
+	neigh->rotation = rot;
+	neigh->UpdateChunkTransforms();
+}
+

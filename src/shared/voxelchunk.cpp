@@ -238,24 +238,20 @@ std::shared_ptr<VoxelChunk> VoxelChunk::GetOrCreateNeighborContaining(ivec3 vxpo
 		SetNeighborhood(neigh);
 	}
 
-	vec3 orthoDir {0};
+	ivec3 orthoDir {0};
 
-	if(vxpos.x >=(s32)width) 		orthoDir = vec3{1,0,0};
-	else if(vxpos.z >=(s32)depth) 	orthoDir = vec3{0,1,0};
-	else if(vxpos.y >=(s32)height) 	orthoDir = vec3{0,0,-1};
+	if(vxpos.x >=(s32)width) 		orthoDir = ivec3{1,0,0};
+	else if(vxpos.y >=(s32)height) 	orthoDir = ivec3{0,1,0};
+	else if(vxpos.z >=(s32)depth) 	orthoDir = ivec3{0,0,1};
 
-	else if(vxpos.x < 0) 			orthoDir = vec3{-1,0,0};
-	else if(vxpos.z < 0) 			orthoDir = vec3{0,-1,0};
-	else if(vxpos.y < 0) 			orthoDir = vec3{0,0,1};
+	else if(vxpos.x < 0) 			orthoDir = ivec3{-1,0,0};
+	else if(vxpos.y < 0) 			orthoDir = ivec3{0,-1,0};
+	else if(vxpos.z < 0) 			orthoDir = ivec3{0,0,-1};
 
 	auto chunk = manager->CreateChunk(width, height, depth);
-	// chunk->modelMatrix = modelMatrix * glm::translate(orthoDir * vec3{width, depth, height});
-	// chunk->position = position + rotation * orthoDir * vec3{width, depth, height};
-	// chunk->rotation = rotation;
+
 	chunk->SetNeighborhood(neigh);
-	
-	std::swap(orthoDir.y, orthoDir.z);
-	chunk->positionInNeighborhood = positionInNeighborhood + ivec3{orthoDir};
+	chunk->positionInNeighborhood = positionInNeighborhood + orthoDir;
 
 	neigh->UpdateChunkTransforms();
 

@@ -63,6 +63,8 @@ void Server::Run() {
 		for(u8 z = 0; z < 3; z++)
 			chunk->CreateBlock(ivec3{x,y,z}, 3);
 	}
+
+	mNeigh->rotation = glm::angleAxis<f32>(PI/4.f, vec3{.707f, 0, .707f});
 	mNeigh->UpdateChunkTransforms();
 
 	logger << "Init";
@@ -91,6 +93,13 @@ void Server::Run() {
 		}
 
 		playerManager->Update();
+
+		// static f32 t = 0;
+		// mNeigh->rotation = glm::angleAxis<f32>((t += 0.01f), vec3{.707f, 0, .707f});
+		// mNeigh->rotation = glm::angleAxis<f32>(0*PI/2.f, vec3{.707f, 0, .707f});
+		// mNeigh->UpdateChunkTransforms();
+
+		// SendNeighborhoodTransform(mNeigh);
 
 		std::this_thread::sleep_for(milliseconds{10});
 	}
@@ -359,4 +368,14 @@ void Server::SendChunkContents(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid)
 
 		network->Send(p, guid);
 	}
+}
+
+void Server::SendNeighborhoodTransform(std::shared_ptr<ChunkNeighborhood> neigh, NetworkGUID guid) {
+	Packet p;
+	p.WriteType(PacketType::SetNeighborhoodTransform);
+	p.Write<u16>(neigh->neighborhoodID);
+	p.Write(neigh->position);
+	p.Write(neigh->rotation);
+
+	network->Send(p, guid);
 }
