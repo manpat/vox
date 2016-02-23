@@ -104,6 +104,7 @@ void Client::Init() {
 
 	if(!network->isConnected) throw "Connection failed";
 
+	camera->position = vec3{2.5, 10, 2.5};
 	player = std::make_shared<LocalPlayer>(camera);
 	playerManager = PlayerManager::Get();
 	playerManager->AddPlayer(player, 0);
@@ -227,6 +228,9 @@ void Client::Run() {
 			auto vx = ch->WorldToVoxelSpace(camera->position + camera->forward*4.f);
 			ch->CreateBlock(vx, 1);
 		}
+
+		if(Input::GetKeyDown(SDLK_r))
+			ClientNetInterface::RequestRefreshChunks();
 
 		if(Input::GetKeyDown(SDLK_t)){
 			testPanel->active ^= true;

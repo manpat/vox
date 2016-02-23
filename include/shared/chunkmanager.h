@@ -12,6 +12,11 @@ struct ChunkNeighborhood {
 	ivec3 chunkSize;
 	u16 neighborhoodID;
 
+	vec3 position; // Position of chunk at vx{0,0,0}
+	quat rotation;
+
+	void UpdateChunkTransforms();
+
 	void AddChunk(std::shared_ptr<VoxelChunk>);
 	void RemoveChunk(std::shared_ptr<VoxelChunk>);
 };

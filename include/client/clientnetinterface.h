@@ -14,6 +14,8 @@ struct ClientNetInterface {
 	static void SetPlayerSector(u8);
 	static void SetBlock(u16 chunkID, ivec3 pos, u16 type, u8 orientation);
 	static void DoInteract(u16 chunkID, ivec3 pos);
+
+	static void RequestRefreshChunks();
 };
 
 #endif

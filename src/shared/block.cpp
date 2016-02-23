@@ -53,14 +53,16 @@ BlockFactory* Block::GetFactory() {
 	return info->factory;
 }
 
+// TODO: Nope. Not much need for this
 mat4 DynamicBlock::GetOrientationMat() {
 	return glm::rotate<f32>(-PI/2.f*orientation, vec3{0,1,0});
 }
 
 vec3 DynamicBlock::GetRelativeCenter() {
-	return vec3{x+1.5, z+1.5, -(f32)y-1.5};
+	// TODO: Check
+	return chunk->rotation * vec3{x+1.5, z+1.5, -(f32)y-1.5};
 }
 
 vec3 DynamicBlock::GetWorldCenter() {
-	return chunk->VoxelToWorldSpace(ivec3{x,y,z}) + vec3{.5f,.5f,-.5f};
+	return chunk->VoxelToWorldSpace(ivec3{x,y,z});
 }

@@ -29,13 +29,15 @@ void Server::Run() {
 	constexpr s32 startPlaneSize = 3;
 	auto startPlaneNeigh = chunkManager->CreateNeighborhood();
 	startPlaneNeigh->neighborhoodID = ++neighborhoodIDCount;
+	startPlaneNeigh->position = vec3{0, -24.f, 0};
+	startPlaneNeigh->rotation = quat{1, 0, 0, 0};
+	// startPlaneNeigh->rotation = glm::angleAxis<f32>(PI/8.f, vec3{1,0,0});
 
 	for(s32 cx = -startPlaneSize; cx <= startPlaneSize; cx++)
 	for(s32 cz = -startPlaneSize; cz <= startPlaneSize; cz++){
 		auto chunk = chunkManager->CreateChunk(24,24,24);
 		chunk->SetNeighborhood(startPlaneNeigh);
 		chunk->positionInNeighborhood = ivec3{cx, cz, 0};
-		chunk->position = vec3{cx * 24.f, -24, -cz * 24.f};
 		chunk->chunkID = ++chunkIDCount;
 
 		for(u32 y = 0; y < chunk->height; y++)
@@ -45,11 +47,27 @@ void Server::Run() {
 		for(u32 z = 1; z < chunk->depth; z++)
 			chunk->CreateBlock(ivec3{12,12,z}, 3);
 	}
+	startPlaneNeigh->UpdateChunkTransforms();
+
+	auto mNeigh = chunkManager->CreateNeighborhood();
+	mNeigh->neighborhoodID = ++neighborhoodIDCount;
+	mNeigh->position = vec3{0, 0, 0};
+	// mNeigh->rotation = quat{1,0,0,0};
+	mNeigh->rotation = glm::angleAxis<f32>(PI/4.f, vec3{0, 1, 0});
+	{	auto chunk = chunkManager->CreateChunk(3,3,3);
+		chunk->SetNeighborhood(mNeigh);
+		chunk->chunkID = ++chunkIDCount;
+
+		for(u8 x = 0; x < 3; x++)
+		for(u8 y = 0; y < 3; y++)
+		for(u8 z = 0; z < 3; z++)
+			chunk->CreateBlock(ivec3{x,y,z}, 3);
+	}
+	mNeigh->UpdateChunkTransforms();
 
 	logger << "Init";
 
 	Packet packet;
-
 	while(true) {
 		network->Update();
 
@@ -64,6 +82,11 @@ void Server::Run() {
 			case PacketType::UpdatePlayerState: OnPlayerStateUpdate(packet); break;
 			case PacketType::SetBlock: OnSetBlock(packet); break;
 			case PacketType::PlayerInteract: OnInteract(packet); break;
+			case PacketType::ChunkDownload:
+				for(auto& chunk: chunkManager->chunks){
+					SendChunkContents(chunk, packet.fromGUID);
+				}
+				break;
 			}
 		}
 
@@ -202,8 +225,12 @@ void Server::OnSetBlock(Packet& p) {
 
 	}else{
 		auto block = ch->CreateBlock(vxPos, blockType);
-		if(!block) logger << "Block creation failed for block type " << blockType;
-		else block->orientation = orientation;
+		if(!block) {
+			logger << "Block creation failed for block type " << blockType;
+			return;
+		}else{
+			block->orientation = orientation;
+		}
 	}
 
 	// Packet needs to be copied because vxPos and chunkID can change
@@ -252,6 +279,7 @@ void Server::SendNewChunk(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid) {
 	packet.Write<u8>(vc->height);
 	packet.Write<u8>(vc->depth);
 	packet.Write(vc->position);
+	packet.Write(vc->rotation);
 
 	packet.reliability = RELIABLE_ORDERED;
 	network->Send(packet, guid);

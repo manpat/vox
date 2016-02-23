@@ -31,12 +31,12 @@ VoxelChunk::VoxelChunk(u32 w, u32 h, u32 d)
 
 	position = vec3{0.f};
 	rotation = quat{1,0,0,0};
-	// rotation = glm::angleAxis<f32>(PI/2.f, vec3{0,1,0});
-	// modelMatrix = mat4(1.f);
 
 	btScalar mass = 0.f;
 	btVector3 inertia {0,0,0};
 
+	// TODO: When shit starts moving, chunks will probably need 
+	//	their own MotionState
 	auto ms = new btDefaultMotionState{btTransform{}};
 
 	RigidBodyInfo bodyInfo{mass, ms, nullptr, inertia};
@@ -250,13 +250,14 @@ std::shared_ptr<VoxelChunk> VoxelChunk::GetOrCreateNeighborContaining(ivec3 vxpo
 
 	auto chunk = manager->CreateChunk(width, height, depth);
 	// chunk->modelMatrix = modelMatrix * glm::translate(orthoDir * vec3{width, depth, height});
-	chunk->position = position + orthoDir * vec3{width, depth, height};
-	chunk->rotation = rotation;
+	// chunk->position = position + rotation * orthoDir * vec3{width, depth, height};
+	// chunk->rotation = rotation;
 	chunk->SetNeighborhood(neigh);
-
+	
 	std::swap(orthoDir.y, orthoDir.z);
-	orthoDir.y = -orthoDir.y;
 	chunk->positionInNeighborhood = positionInNeighborhood + ivec3{orthoDir};
+
+	neigh->UpdateChunkTransforms();
 
 	return chunk;
 }
@@ -353,7 +354,7 @@ ivec3 VoxelChunk::WorldToVoxelSpace(vec3 w) {
 }
 
 vec3 VoxelChunk::VoxelToWorldSpace(ivec3 v) {
-	auto modelSpace = rotation * vec3{v.x+1, v.z+1, -v.y-1};
+	auto modelSpace = rotation * vec3{v.x+1.5, v.z+1.5, -v.y-1.5};
 	return position + modelSpace;
 }
 

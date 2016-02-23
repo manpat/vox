@@ -132,18 +132,16 @@ void LocalPlayer::Update() {
 					if(Input::GetButtonDown(Input::MouseRight)){
 						ClientNetInterface::SetBlock(chnk->chunkID, vxpos, 0, 0);
 					}else{
-						// This takes the players forward and converts it into 
-						//	a block rotation relative to the chunk
-
+						// If raycast normal is perpendicular to the up of the 
+						//	chunk, rotate such that player look direction is block north
+						// Otherwise, rotate based on normal such that
+						//	 the north faces -normal
+						
 						auto chnkFwd = chnk->rotation * vec3{0,0,-1};
 						auto chnkUp = chnk->rotation * vec3{0,1,0};
 						auto chnkRgt = chnk->rotation * vec3{1,0,0};
 						auto plyFwd = camera->rotation * vec3{0,0,-1};
 
-						// If raycast normal is perpendicular to the up of the 
-						//	chunk, rotate such that player look direction is block north
-						// Otherwise, rotate based on normal such that
-						//	 the north faces -normal
 						bool upPerpendicular = glm::abs(glm::dot(normal, chnkUp)) > 0.707f;
 
 						auto chu = glm::dot(chnkFwd, upPerpendicular?plyFwd:-normal);

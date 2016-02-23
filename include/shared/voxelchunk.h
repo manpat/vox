@@ -28,7 +28,6 @@ struct VoxelChunk {
 
 	vec3 position;
 	quat rotation;
-	// Orientation
 	// mat4 modelMatrix;
 
 	std::weak_ptr<VoxelChunk> self;

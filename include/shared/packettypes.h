@@ -28,17 +28,22 @@ namespace PacketType {
 		SetBlock,
 
 		// [S->C] Notify of chunk stuff
-		// ChunkID, NeighborhoodID, size(u8,u8,u8), position, ...
+		// ChunkID, NeighborhoodID, size(u8,u8,u8), position, rotation
 		NewChunk,
 		// ChunkID
 		RemoveChunk,
+		
+		// [S->C] Set position and rotation of neighborhood
+		// NeighborhoodID, position, rotation
+		SetNeighborhoodTransform,
 
 		// [S->C] Set the neighborhood of a chunk
 		// ChunkID, NeighborhoodID, Position in neighborhood
 		SetChunkNeighborhood,
 
-		// [S->C] Set some portion of a chunk
-		// ChunkID, u16 offset, u8 numBlocks, {blockID:14, orientation:2}...
+		// [S<>C] Set some portion of a chunk
+		// S->C ChunkID, u16 offset, u8 numBlocks, {blockID:14, orientation:2}...
+		// S<-C nothing
 		// Limit 245 blocks per packet
 		// Assumes chunk size will never exceed 32x32x32
 		ChunkDownload,

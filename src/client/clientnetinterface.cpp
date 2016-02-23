@@ -101,6 +101,12 @@ void ClientNetInterface::DoInteract(u16 chunkID, ivec3 pos) {
 	Network::Get()->Send(packet);
 }
 
+void ClientNetInterface::RequestRefreshChunks() {
+	Packet packet;
+	packet.WriteType(PacketType::ChunkDownload);
+
+	Network::Get()->Send(packet);
+}
 
 /*
 	                                                                                                             
@@ -143,6 +149,7 @@ void OnNewChunk(Packet& packet) {
 	u16 neighborhoodID;
 	u8 w,h,d;
 	vec3 position;
+	quat rotation;
 
 	packet.Read(chunkID);
 	packet.Read(neighborhoodID);
@@ -150,6 +157,7 @@ void OnNewChunk(Packet& packet) {
 	packet.Read(h);
 	packet.Read(d);
 	packet.Read(position);
+	packet.Read(rotation);
 
 	auto neigh = chmgr->GetNeighborhood(neighborhoodID);
 	if(!neigh) {
@@ -161,6 +169,7 @@ void OnNewChunk(Packet& packet) {
 	auto ch = chmgr->CreateChunk(w,h,d);
 	ch->SetNeighborhood(neigh);
 	ch->position = position;
+	ch->rotation = rotation;
 	ch->chunkID = chunkID;
 
 	// logger << "New chunk " << chunkID << " at " << position;
@@ -198,7 +207,7 @@ void OnSetBlock(Packet& packet) {
 	if(blockType) {
 		auto blk = ch->CreateBlock(vxPos, blockType);
 		if(blk) blk->orientation = orientation;
-		else logger << "Block create failed";
+		else logger << "Block create failed at " << vxPos;
 	}else{
 		ch->DestroyBlock(vxPos);
 	}
