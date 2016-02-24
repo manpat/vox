@@ -2,10 +2,10 @@
 #include "shaderregistry.h"
 #include "chunkrenderer.h"
 #include "chunkmanager.h"
-#include "voxelchunk.h"
 #include "quadbuffer.h"
 #include "camera.h"
 #include "block.h"
+#include "chunk.h"
 
 static Log logger{"ChunkRenderer"};
 
@@ -147,7 +147,7 @@ ChunkRenderInfo::~ChunkRenderInfo() {
 	glDeleteTextures(1, &faceTex);
 }
 
-void ChunkRenderInfo::Update(std::shared_ptr<VoxelChunk> vc) {
+void ChunkRenderInfo::Update(std::shared_ptr<Chunk> vc) {
 	vc->GenerateMesh();
 
 	if(!vertexBO) glGenBuffers(1, &vertexBO);

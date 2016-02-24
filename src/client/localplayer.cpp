@@ -1,8 +1,8 @@
 #include "clientnetinterface.h"
 #include "chunkmanager.h"
 #include "localplayer.h"
-#include "voxelchunk.h"
 #include "camera.h"
+#include "chunk.h"
 #include "input.h"
 #include "block.h"
 
@@ -114,7 +114,7 @@ void LocalPlayer::Update() {
 			auto col = raycastResult.rigidbody->getCollisionShape();
 			// TODO: Change this
 			// It will explode as soon as we start using the user pointers for other things
-			if(auto chnk = (VoxelChunk*)col->getUserPointer()) {
+			if(auto chnk = (Chunk*)col->getUserPointer()) {
 				auto normal = raycastResult.normal;
 
 				if(Input::GetButtonDown(Input::MouseRight) || !blockType)

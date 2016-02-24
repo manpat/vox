@@ -1,7 +1,7 @@
+#include "chunk.h"
 #include "block.h"
 #include "server.h"
 #include "network.h"
-#include "voxelchunk.h"
 #include "serverplayer.h"
 #include "chunkmanager.h"
 #include "playermanager.h"
@@ -259,7 +259,7 @@ void Server::OnSetBlock(Packet& p) {
 	np.WriteType(PacketType::SetBlock);
 	np.Write(chunkID);
 	np.Write(vxPos);
-	np.Write<u16>(blockType << 2 | orientation);
+	np.Write<u16>(blockType << 2 | (orientation & 3));
 
 	np.reliability = RELIABLE_ORDERED;
 
@@ -289,7 +289,7 @@ void Server::OnInteract(Packet& p) {
 		dyn->OnInteract();
 }
 
-void Server::SendNewChunk(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid) {
+void Server::SendNewChunk(std::shared_ptr<Chunk> vc, NetworkGUID guid) {
 	auto neigh = vc->neighborhood.lock();
 	auto neighID = neigh?neigh->neighborhoodID:0;
 
@@ -314,7 +314,7 @@ void Server::SendNewChunk(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid) {
 	network->Send(packet, guid);
 }
 
-void Server::SendSetNeighborhood(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid) {
+void Server::SendSetNeighborhood(std::shared_ptr<Chunk> vc, NetworkGUID guid) {
 	auto neigh = vc->neighborhood.lock();
 
 	Packet packet;
@@ -326,7 +326,7 @@ void Server::SendSetNeighborhood(std::shared_ptr<VoxelChunk> vc, NetworkGUID gui
 	network->Send(packet, guid);
 }
 
-void Server::SendChunkContents(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid) {
+void Server::SendChunkContents(std::shared_ptr<Chunk> vc, NetworkGUID guid) {
 	if(vc->width > 32
 	|| vc->depth > 32
 	|| vc->height > 32) {

@@ -104,14 +104,14 @@ Weapon stuff
 Moving things
 =============
 
-VoxelChunks can be at weird angles and can move so we need
+Chunks can be at weird angles and can move so we need
 a way to render and apply phyics to things near them
 
 Biggest priority being ships
 
 "Gravity Generator"
 
-On collide with VoxelChunk set players gravity thing/parent
+On collide with Chunk set players gravity thing/parent
 Rendering should be fine
 
 Physics tho
@@ -145,7 +145,7 @@ Replication layer
 	Synchronises entities between server and clients
 	Gathers data from local player and manages updating of NetworkedPlayers
 
-	VoxelChunk keeps track of modified blocks in buffer which is sent to transport 
+	Chunk keeps track of modified blocks in buffer which is sent to transport 
 		layer at end of frame
 
 		Transport layer can then optimise packets for large changes

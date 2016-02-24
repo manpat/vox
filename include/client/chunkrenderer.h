@@ -3,8 +3,8 @@
 
 #include "common.h"
 
+struct Chunk;
 struct ChunkManager;
-struct VoxelChunk;
 
 struct ChunkRenderInfo {
 	u32 vertexBO, faceBO, faceTex;
@@ -14,8 +14,8 @@ struct ChunkRenderInfo {
 	ChunkRenderInfo(const ChunkRenderInfo&) = delete;
 	~ChunkRenderInfo();
 
-	// Calls VoxelChunk::GenerateMesh()
-	void Update(std::shared_ptr<VoxelChunk>);
+	// Calls Chunk::GenerateMesh()
+	void Update(std::shared_ptr<Chunk>);
 };
 
 struct ChunkRenderer {

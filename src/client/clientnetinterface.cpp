@@ -1,11 +1,11 @@
 #include "clientnetinterface.h"
 #include "playermanager.h"
 #include "chunkmanager.h"
-#include "voxelchunk.h"
 #include "netplayer.h"
 #include "debugdraw.h"
 #include "network.h"
 #include "block.h"
+#include "chunk.h"
 
 static Log logger{"ClientNetInterface"};
 

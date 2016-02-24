@@ -1,8 +1,8 @@
 #ifndef BL_BASIC_H
 #define BL_BASIC_H
 
-#include "voxelchunk.h"
 #include "common.h"
+#include "chunk.h"
 #include "block.h"
 
 struct TestDynamicBlock : DynamicBlock {

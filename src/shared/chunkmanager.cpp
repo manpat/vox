@@ -1,5 +1,5 @@
 #include "chunkmanager.h"
-#include "voxelchunk.h"
+#include "chunk.h"
 #include "block.h"
 
 static Log logger{"ChunkManager"};
@@ -59,8 +59,8 @@ void ChunkManager::PopulateVoxelInfo() {
 	}
 }
 
-std::shared_ptr<VoxelChunk> ChunkManager::CreateChunk(u32 w, u32 h, u32 d) {
-	auto nchunk = std::make_shared<VoxelChunk>(w,h,d);
+std::shared_ptr<Chunk> ChunkManager::CreateChunk(u32 w, u32 h, u32 d) {
+	auto nchunk = std::make_shared<Chunk>(w,h,d);
 	chunks.push_back(nchunk);
 
 	nchunk->chunkID = 0;
@@ -81,7 +81,7 @@ void ChunkManager::Update() {
 	}
 }
 
-std::shared_ptr<VoxelChunk> ChunkManager::GetChunk(u16 id) {
+std::shared_ptr<Chunk> ChunkManager::GetChunk(u16 id) {
 	auto it = std::find_if(chunks.begin(), chunks.end(), [id](auto& ch) {
 		return id == ch->chunkID;
 	});
@@ -121,7 +121,7 @@ std::shared_ptr<ChunkNeighborhood> ChunkManager::GetNeighborhood(u16 id) {
 	                            aa,    ,88                                                                                                 
 	                             "Y8bbdP"                                                                                                  
 */
-void ChunkNeighborhood::AddChunk(std::shared_ptr<VoxelChunk> c) {
+void ChunkNeighborhood::AddChunk(std::shared_ptr<Chunk> c) {
 	if(!chunks.size()) {
 		chunkSize = ivec3{c->width, c->height, c->depth};
 		c->positionInNeighborhood = ivec3{0};
@@ -130,7 +130,7 @@ void ChunkNeighborhood::AddChunk(std::shared_ptr<VoxelChunk> c) {
 	chunks.emplace_back(c);
 }
 
-void ChunkNeighborhood::RemoveChunk(std::shared_ptr<VoxelChunk> c) {
+void ChunkNeighborhood::RemoveChunk(std::shared_ptr<Chunk> c) {
 	auto endIt = std::remove_if(chunks.begin(), chunks.end(), [&c](auto wn) {
 		return wn.lock() == c;
 	});
@@ -147,7 +147,7 @@ void ChunkNeighborhood::UpdateChunkTransforms() {
 	}
 }
 
-void ChunkNeighborhood::UpdateChunkTransform(std::shared_ptr<VoxelChunk> ch) {
+void ChunkNeighborhood::UpdateChunkTransform(std::shared_ptr<Chunk> ch) {
 	auto offset = vec3{chunkSize * ch->positionInNeighborhood};
 	std::swap(offset.y, offset.z);
 	offset.z = -offset.z;

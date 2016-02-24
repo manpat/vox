@@ -51,7 +51,7 @@ struct BlockInfo {
 	bool RequiresIDsForRotations() { return geometry == GeometryType::Slope; }
 };
 
-struct VoxelChunk;
+struct Chunk;
 struct DynamicBlock;
 
 struct Block {
@@ -65,7 +65,7 @@ struct Block {
 };
 
 struct DynamicBlock : Block {
-	VoxelChunk* chunk;
+	Chunk* chunk;
 	u8 x,y,z;
 	
 	virtual ~DynamicBlock() {};

@@ -1,13 +1,13 @@
 #include "chunkmanager.h"
-#include "voxelchunk.h"
 #include "physics.h"
 #include "block.h"
+#include "chunk.h"
 
 #include "stb_voxel_render.h"
 
-static Log logger{"VoxelChunk"};
+static Log logger{"Chunk"};
 
-VoxelChunk::VoxelChunk(u32 w, u32 h, u32 d) 
+Chunk::Chunk(u32 w, u32 h, u32 d) 
 	: width{w}, height{h}, depth{d} {
 
 	chunkID = 0;
@@ -45,7 +45,7 @@ VoxelChunk::VoxelChunk(u32 w, u32 h, u32 d)
 	collider = nullptr;
 }
 
-VoxelChunk::~VoxelChunk() {
+Chunk::~Chunk() {
 	delete[] geometryData;
 	delete[] rotationData;
 	geometryData = nullptr;
@@ -88,7 +88,7 @@ static btVector3 VoxIntToVert(u32 vert) {
 	return o2bt(offset);
 }
 
-void VoxelChunk::GenerateMesh() {
+void Chunk::GenerateMesh() {
 	auto manager = ChunkManager::Get();
 	auto mm = &manager->mm;
 
@@ -146,7 +146,7 @@ void VoxelChunk::GenerateMesh() {
 	}
 }
 
-void VoxelChunk::Update() {
+void Chunk::Update() {
 	UpdateBlocks();
 	// TODO: Check bordering voxels of neighbors and copy into margin
 	// Otherwise AO breaks
@@ -166,7 +166,7 @@ void VoxelChunk::Update() {
 	rigidbody->setCenterOfMassTransform(worldTrans);
 }
 
-void VoxelChunk::UpdateVoxelData() {
+void Chunk::UpdateVoxelData() {
 	for(u32 x = 0; x < width; x++)
 	for(u32 y = 0; y < height; y++)
 	for(u32 z = 0; z < depth; z++) {
@@ -193,7 +193,7 @@ void VoxelChunk::UpdateVoxelData() {
 	voxelsDirty = true;
 }
 
-void VoxelChunk::UpdateBlocks() {
+void Chunk::UpdateBlocks() {
 	// TODO: If this ever becomes a problem, dynamic blocks
 	//	could be stored in another list
 	for(u32 i = 0; i < width*depth*height; i++) {
@@ -205,7 +205,7 @@ void VoxelChunk::UpdateBlocks() {
 	}
 }
 
-void VoxelChunk::PostRender() {
+void Chunk::PostRender() {
 	// TODO: If this ever becomes a problem, dynamic blocks
 	//	could be stored in another list
 	for(u32 i = 0; i < width*depth*height; i++) {
@@ -217,7 +217,7 @@ void VoxelChunk::PostRender() {
 	}
 }
 
-std::shared_ptr<VoxelChunk> VoxelChunk::GetOrCreateNeighborContaining(ivec3 vxpos) {
+std::shared_ptr<Chunk> Chunk::GetOrCreateNeighborContaining(ivec3 vxpos) {
 	auto manager = ChunkManager::Get();
 	std::shared_ptr<ChunkNeighborhood> neigh;
 
@@ -258,7 +258,7 @@ std::shared_ptr<VoxelChunk> VoxelChunk::GetOrCreateNeighborContaining(ivec3 vxpo
 	return chunk;
 }
 
-void VoxelChunk::SetNeighborhood(std::shared_ptr<ChunkNeighborhood> n) {	
+void Chunk::SetNeighborhood(std::shared_ptr<ChunkNeighborhood> n) {	
 	if(auto neigh = neighborhood.lock()) {
 		neigh->RemoveChunk(self.lock());
 	}
@@ -268,7 +268,7 @@ void VoxelChunk::SetNeighborhood(std::shared_ptr<ChunkNeighborhood> n) {
 }
 
 
-Block* VoxelChunk::CreateBlock(ivec3 pos, u16 id) {
+Block* Chunk::CreateBlock(ivec3 pos, u16 id) {
 	if(!InBounds(pos)) return nullptr;
 
 	auto blockInfo = BlockRegistry::GetBlockInfo(id);
@@ -308,7 +308,7 @@ Block* VoxelChunk::CreateBlock(ivec3 pos, u16 id) {
 	return block;
 }
 
-void VoxelChunk::DestroyBlock(ivec3 pos) {
+void Chunk::DestroyBlock(ivec3 pos) {
 	if(!InBounds(pos)) return;
 
 	auto idx = pos.z + pos.y*depth + pos.x*depth*height;
@@ -334,14 +334,14 @@ void VoxelChunk::DestroyBlock(ivec3 pos) {
 	blocksDirty = true;
 }
 
-Block* VoxelChunk::GetBlock(ivec3 pos) {
+Block* Chunk::GetBlock(ivec3 pos) {
 	if(!InBounds(pos)) return nullptr;
 	auto idx = pos.z + pos.y*depth + pos.x*depth*height;
 
 	return blocks[idx];
 }
 
-ivec3 VoxelChunk::WorldToVoxelSpace(vec3 w) {
+ivec3 Chunk::WorldToVoxelSpace(vec3 w) {
 	auto modelSpace = glm::inverse(rotation) * (w - position);
 	return ivec3 {
 		floor(modelSpace.x-1.f),
@@ -350,13 +350,13 @@ ivec3 VoxelChunk::WorldToVoxelSpace(vec3 w) {
 	};
 }
 
-vec3 VoxelChunk::VoxelToWorldSpace(ivec3 v) {
+vec3 Chunk::VoxelToWorldSpace(ivec3 v) {
 	// Returned coordinate is center of voxel
 	auto modelSpace = rotation * vec3{v.x+1.5, v.z+1.5, -v.y-1.5};
 	return position + modelSpace;
 }
 
-bool VoxelChunk::InBounds(ivec3 p) {
+bool Chunk::InBounds(ivec3 p) {
 	return !(
 		(u32)p.x >= width || 
 		(u32)p.y >= height || 

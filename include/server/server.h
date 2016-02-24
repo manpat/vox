@@ -10,7 +10,7 @@
 struct ChunkNeighborhood;
 struct PlayerManager;
 struct ChunkManager;
-struct VoxelChunk;
+struct Chunk;
 
 struct Server {
 	std::shared_ptr<PlayerManager> playerManager;
@@ -31,9 +31,9 @@ struct Server {
 	void OnInteract(Packet&);
 
 	// If guid is Unassigned, these broadcast
-	void SendNewChunk(std::shared_ptr<VoxelChunk>, NetworkGUID = RakNet::UNASSIGNED_RAKNET_GUID);
-	void SendChunkContents(std::shared_ptr<VoxelChunk>, NetworkGUID = RakNet::UNASSIGNED_RAKNET_GUID);
-	void SendSetNeighborhood(std::shared_ptr<VoxelChunk>, NetworkGUID = RakNet::UNASSIGNED_RAKNET_GUID);
+	void SendNewChunk(std::shared_ptr<Chunk>, NetworkGUID = RakNet::UNASSIGNED_RAKNET_GUID);
+	void SendChunkContents(std::shared_ptr<Chunk>, NetworkGUID = RakNet::UNASSIGNED_RAKNET_GUID);
+	void SendSetNeighborhood(std::shared_ptr<Chunk>, NetworkGUID = RakNet::UNASSIGNED_RAKNET_GUID);
 
 	void SendNeighborhoodTransform(std::shared_ptr<ChunkNeighborhood>, NetworkGUID = RakNet::UNASSIGNED_RAKNET_GUID);
 };
