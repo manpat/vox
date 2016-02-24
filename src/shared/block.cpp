@@ -44,13 +44,23 @@ bool BlockRegistry::IsValidID(u16 blockID) {
 
 
 DynamicBlock* Block::AsDynamic() {
+	auto info = GetInfo();
 	if(!info || !info->dynamic) return nullptr;
 	return static_cast<DynamicBlock*>(this);
 }
 
 BlockFactory* Block::GetFactory() {
-	if(!info) return nullptr;
-	return info->factory;
+	if(auto info = BlockRegistry::GetBlockInfo(blockID))
+		return info->factory;
+
+	return nullptr;
+}
+
+BlockInfo* Block::GetInfo() {
+	if(auto info = BlockRegistry::GetBlockInfo(blockID))
+		return info;
+
+	return nullptr;
 }
 
 // TODO: Nope. Not much need for this

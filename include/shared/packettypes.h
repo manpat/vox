@@ -28,7 +28,7 @@ namespace PacketType {
 		SetBlock,
 
 		// [S->C] Notify of chunk stuff
-		// ChunkID, NeighborhoodID, size(u8,u8,u8), position, rotation
+		// ChunkID, NeighborhoodID, size(u8,u8,u8), [positionInNeighborhood | {position, rotation} if neigh == 0]
 		NewChunk,
 		// ChunkID
 		RemoveChunk,

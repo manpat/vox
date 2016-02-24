@@ -50,8 +50,8 @@ void ClientNetInterface::Update(std::shared_ptr<Network> net) {
 			case PacketType::RemoveChunk: OnRemoveChunk(packet); break;
 
 			case PacketType::SetBlock: OnSetBlock(packet); break;
-			case PacketType::SetChunkNeighborhood: OnSetChunkNeighborhood(packet); break;
 			case PacketType::ChunkDownload: OnChunkDownload(packet); break;
+			case PacketType::SetChunkNeighborhood: OnSetChunkNeighborhood(packet); break;
 			case PacketType::SetNeighborhoodTransform: OnSetNeighborhoodTransform(packet); break;
 		}
 	}
@@ -152,27 +152,38 @@ void OnNewChunk(Packet& packet) {
 	u8 w,h,d;
 	vec3 position;
 	quat rotation;
+	ivec3 poi;
 
 	packet.Read(chunkID);
 	packet.Read(neighborhoodID);
 	packet.Read(w);
 	packet.Read(h);
 	packet.Read(d);
-	packet.Read(position);
-	packet.Read(rotation);
-
-	auto neigh = chmgr->GetNeighborhood(neighborhoodID);
-	if(!neigh) {
-		neigh = chmgr->CreateNeighborhood();
-		neigh->neighborhoodID = neighborhoodID;
-		neigh->chunkSize = ivec3{w,h,d};
-	}
 
 	auto ch = chmgr->CreateChunk(w,h,d);
-	ch->SetNeighborhood(neigh);
-	ch->position = position;
-	ch->rotation = rotation;
 	ch->chunkID = chunkID;
+
+	if(!neighborhoodID) {
+		packet.Read(position);
+		packet.Read(rotation);
+
+		ch->position = position;
+		ch->rotation = rotation;
+
+	}else{
+		packet.Read(poi);
+
+		auto neigh = chmgr->GetNeighborhood(neighborhoodID);
+		if(!neigh) {
+			neigh = chmgr->CreateNeighborhood();
+			neigh->neighborhoodID = neighborhoodID;
+			neigh->chunkSize = ivec3{w,h,d};
+		}
+		
+		ch->SetNeighborhood(neigh);
+		ch->positionInNeighborhood = poi;
+		neigh->UpdateChunkTransform(ch);
+	}
 
 	// logger << "New chunk " << chunkID << " at " << position;
 }
@@ -280,6 +291,9 @@ void OnSetChunkNeighborhood(Packet& packet) {
 
 	ch->SetNeighborhood(neigh);
 	packet.Read<ivec3>(ch->positionInNeighborhood);
+
+	logger << ch->positionInNeighborhood;
+	neigh->UpdateChunkTransform(ch);
 }
 
 void OnSetNeighborhoodTransform(Packet& packet) {

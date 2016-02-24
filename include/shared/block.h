@@ -13,7 +13,7 @@ struct Block;
 struct BlockInfo;
 
 struct BlockFactory {
-	BlockInfo* blockInfo;
+	u16 blockID;
 	virtual Block* Create() = 0;
 	virtual void Destroy(Block*) = 0;
 	virtual ~BlockFactory() {}
@@ -25,7 +25,7 @@ template<class T>
 struct DefaultBlockFactory : BlockFactory {
 	T* Create() override {
 		auto bl = new T;
-		bl->info = blockInfo;
+		bl->blockID = blockID;
 		return bl;
 	}
 
@@ -55,13 +55,13 @@ struct VoxelChunk;
 struct DynamicBlock;
 
 struct Block {
-	BlockInfo* info; // TODO: Could this just be blockID? May be necessary for serialization
-
-	u8 orientation;
+	u16 blockID;
+	u8 orientation; // This only needs two bits
 	// Tint?
 
 	DynamicBlock* AsDynamic();
 	BlockFactory* GetFactory();
+	BlockInfo* GetInfo();
 };
 
 struct DynamicBlock : Block {
@@ -108,7 +108,7 @@ struct BlockRegisterer {
 		bi = BlockRegistry::AllocateBlockInfo();
 
 		bi->factory = new F<B>;
-		bi->factory->blockInfo = bi;
+		bi->factory->blockID = bi->blockID;
 
 		B::PopulateBlockInfo(bi);
 
@@ -134,7 +134,7 @@ struct DecoBlockRegisterer {
 		
 		// TODO: Use single static pool for all deco blocks
 		bi->factory = new DefaultBlockFactory<Block>;
-		bi->factory->blockInfo = bi;
+		bi->factory->blockID = bi->blockID;
 
 		bi->name = name;
 		bi->geometry = geometry;

@@ -16,6 +16,7 @@ struct ChunkNeighborhood {
 	quat rotation;
 
 	void UpdateChunkTransforms();
+	void UpdateChunkTransform(std::shared_ptr<VoxelChunk>);
 
 	void AddChunk(std::shared_ptr<VoxelChunk>);
 	void RemoveChunk(std::shared_ptr<VoxelChunk>);

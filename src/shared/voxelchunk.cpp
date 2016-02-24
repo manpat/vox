@@ -179,7 +179,7 @@ void VoxelChunk::UpdateVoxelData() {
 			continue;
 		}
 
-		auto bi = block->info;
+		auto bi = block->GetInfo();
 		occlusionData[idx] = bi->doesOcclude? 0:255;
 		rotationData[idx] = block->orientation;
 
@@ -194,10 +194,10 @@ void VoxelChunk::UpdateVoxelData() {
 }
 
 void VoxelChunk::UpdateBlocks() {
-	for(u32 x = 0; x < width; x++)
-	for(u32 y = 0; y < height; y++)
-	for(u32 z = 0; z < depth; z++) {
-		auto block = blocks[z + y*depth + x*depth*height];
+	// TODO: If this ever becomes a problem, dynamic blocks
+	//	could be stored in another list
+	for(u32 i = 0; i < width*depth*height; i++) {
+		auto block = blocks[i];
 		if(!block) continue;
 
 		if(auto dyn = block->AsDynamic())
@@ -206,10 +206,10 @@ void VoxelChunk::UpdateBlocks() {
 }
 
 void VoxelChunk::PostRender() {
-	for(u32 x = 0; x < width; x++)
-	for(u32 y = 0; y < height; y++)
-	for(u32 z = 0; z < depth; z++) {
-		auto block = blocks[z + y*depth + x*depth*height];
+	// TODO: If this ever becomes a problem, dynamic blocks
+	//	could be stored in another list
+	for(u32 i = 0; i < width*depth*height; i++) {
+		auto block = blocks[i];
 		if(!block) continue;
 
 		if(auto dyn = block->AsDynamic())
@@ -253,7 +253,7 @@ std::shared_ptr<VoxelChunk> VoxelChunk::GetOrCreateNeighborContaining(ivec3 vxpo
 	chunk->SetNeighborhood(neigh);
 	chunk->positionInNeighborhood = positionInNeighborhood + orthoDir;
 
-	neigh->UpdateChunkTransforms();
+	neigh->UpdateChunkTransform(chunk);
 
 	return chunk;
 }
@@ -323,8 +323,9 @@ void VoxelChunk::DestroyBlock(ivec3 pos) {
 		if(factory) {
 			factory->Destroy(block);
 		}else{
+			auto bi = block->GetInfo();
 			logger << "Tried to destroy block with no factory!";
-			logger << (block->info? block->info->name : "<null blockinfo>");
+			logger << (bi? bi->name : "<null blockinfo>");
 		}
 	}
 
@@ -350,6 +351,7 @@ ivec3 VoxelChunk::WorldToVoxelSpace(vec3 w) {
 }
 
 vec3 VoxelChunk::VoxelToWorldSpace(ivec3 v) {
+	// Returned coordinate is center of voxel
 	auto modelSpace = rotation * vec3{v.x+1.5, v.z+1.5, -v.y-1.5};
 	return position + modelSpace;
 }

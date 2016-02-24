@@ -139,19 +139,19 @@ void ChunkNeighborhood::RemoveChunk(std::shared_ptr<VoxelChunk> c) {
 }
 
 void ChunkNeighborhood::UpdateChunkTransforms() {
-	vec3 wChunkStride {chunkSize};
-	std::swap(wChunkStride.y, wChunkStride.z);
-
 	for(auto& wch: chunks) {
 		auto ch = wch.lock();
 		if(!ch) continue;
 
-		auto pin = vec3{ch->positionInNeighborhood};
-		std::swap(pin.y, pin.z);
-		pin.z = -pin.z;
-
-		auto offset = wChunkStride * pin;
-		ch->position = position + rotation * offset;
-		ch->rotation = rotation;
+		UpdateChunkTransform(ch);
 	}
+}
+
+void ChunkNeighborhood::UpdateChunkTransform(std::shared_ptr<VoxelChunk> ch) {
+	auto offset = vec3{chunkSize * ch->positionInNeighborhood};
+	std::swap(offset.y, offset.z);
+	offset.z = -offset.z;
+
+	ch->position = position + rotation * offset;
+	ch->rotation = rotation;
 }

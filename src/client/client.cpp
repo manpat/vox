@@ -97,7 +97,7 @@ void Client::Init() {
 
 	Debug::Init();
 
-	for(u32 i = 0; i < 100 && !network->isConnected; i++) {
+	for(u32 i = 0; i < 500 && !network->isConnected; i++) {
 		network->Update();
 		SDL_Delay(10);
 	}
@@ -215,19 +215,19 @@ void Client::Run() {
 		if(Input::GetKeyDown(SDLK_F2))
 			Input::hasFocus = false;
 
-		if(Input::GetKeyDown(SDLK_n)) {
-			auto ch = chunkManager->CreateChunk(11,11,11);
+		// if(Input::GetKeyDown(SDLK_n)) {
+		// 	auto ch = chunkManager->CreateChunk(11,11,11);
 
-			auto chpos = camera->position + camera->forward*4.f;
-			chpos.x += 11.f/-2.f -1;
-			chpos.y += 11.f/-2.f -1;
-			chpos.z += 11.f/ 2.f +1;
-			// ch->modelMatrix = glm::translate(chpos);
-			ch->position = chpos;
+		// 	auto chpos = camera->position + camera->forward*4.f;
+		// 	chpos.x += 11.f/-2.f -1;
+		// 	chpos.y += 11.f/-2.f -1;
+		// 	chpos.z += 11.f/ 2.f +1;
+		// 	// ch->modelMatrix = glm::translate(chpos);
+		// 	ch->position = chpos;
 
-			auto vx = ch->WorldToVoxelSpace(camera->position + camera->forward*4.f);
-			ch->CreateBlock(vx, 1);
-		}
+		// 	auto vx = ch->WorldToVoxelSpace(camera->position + camera->forward*4.f);
+		// 	ch->CreateBlock(vx, 1);
+		// }
 
 		if(Input::GetKeyDown(SDLK_r))
 			ClientNetInterface::RequestRefreshChunks();

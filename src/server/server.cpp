@@ -73,6 +73,12 @@ void Server::Run() {
 	while(true) {
 		network->Update();
 
+		// TODO: Instead of dispatching player/block updates as they come in,
+		//	update only on serverside, then send out state updates at regular interval
+		// This NEEDS to happen at some point
+		// High-frequency updates should only be sent to players in range
+		// Neighborhood transform updates need to be sent automatically
+
 		while(network->GetPacket(&packet)) {
 			u8 type = packet.ReadType();
 
@@ -94,12 +100,14 @@ void Server::Run() {
 
 		playerManager->Update();
 
-		// static f32 t = 0;
-		// mNeigh->rotation = glm::angleAxis<f32>((t += 0.01f), vec3{.707f, 0, .707f});
-		// mNeigh->rotation = glm::angleAxis<f32>(0*PI/2.f, vec3{.707f, 0, .707f});
-		// mNeigh->UpdateChunkTransforms();
+		// TEMPORARY
+		static f32 t = 0;
+		mNeigh->rotation = glm::angleAxis<f32>((t += 0.01f), vec3{.707f, 0, .707f});
+		mNeigh->position = vec3{0, -10, -20} + mNeigh->rotation * -vec3{2.5, 2.5,-2.5};
+		mNeigh->UpdateChunkTransforms();
 
-		// SendNeighborhoodTransform(mNeigh);
+		SendNeighborhoodTransform(mNeigh);
+		// TEMPORARY
 
 		std::this_thread::sleep_for(milliseconds{10});
 	}
@@ -128,6 +136,10 @@ void Server::OnPlayerConnect(NetworkGUID guid) {
 	//	NewChunk packet, it will be discarded on the client side
 	for(auto& chunk: chunkManager->chunks){
 		SendChunkContents(chunk, guid);
+	}
+
+	for(auto& neigh: chunkManager->neighborhoods){
+		SendNeighborhoodTransform(neigh, guid);
 	}
 }
 
@@ -279,16 +291,24 @@ void Server::OnInteract(Packet& p) {
 
 void Server::SendNewChunk(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid) {
 	auto neigh = vc->neighborhood.lock();
+	auto neighID = neigh?neigh->neighborhoodID:0;
 
 	Packet packet;
 	packet.WriteType(PacketType::NewChunk);
 	packet.Write(vc->chunkID);
-	packet.Write<u16>(neigh?neigh->neighborhoodID:0);
+	packet.Write<u16>(neighID);
 	packet.Write<u8>(vc->width);
 	packet.Write<u8>(vc->height);
 	packet.Write<u8>(vc->depth);
-	packet.Write(vc->position);
-	packet.Write(vc->rotation);
+
+	if(neighID) {
+		packet.Write(vc->positionInNeighborhood);
+
+	}else{
+		packet.Write(vc->position);
+		packet.Write(vc->rotation);
+	}
+
 
 	packet.reliability = RELIABLE_ORDERED;
 	network->Send(packet, guid);
@@ -327,7 +347,7 @@ void Server::SendChunkContents(std::shared_ptr<VoxelChunk> vc, NetworkGUID guid)
 		auto b = blocks[i];
 		if(!b) continue;
 
-		auto bID = b->info->blockID;
+		auto bID = b->blockID;
 		packetInfo[i] = bID << 2 | (b->orientation & 3);
 	}
 
