@@ -8,7 +8,7 @@ struct Network;
 struct ClientNetInterface {
 	static void Update(std::shared_ptr<Network>);
 
-	static void UpdatePlayerState(vec3,vec3,quat);
+	static void UpdatePlayerState(vec3,vec3,quat,quat);
 	static void SetPlayerName(const std::string&);
 	static void SetPlayerTeam(u8);
 	static void SetPlayerSector(u8);

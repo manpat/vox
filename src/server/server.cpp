@@ -100,6 +100,22 @@ void Server::Run() {
 
 		playerManager->Update();
 
+		// Send state updates for all players
+		// TODO: Limit sending packets to within a sector
+		for(auto ply: playerManager->players) {
+			packet.Reset();
+			packet.WriteType(PacketType::UpdatePlayerState);
+			packet.Write<u16>(ply->playerID);
+			packet.Write(ply->GetPosition());
+			packet.Write(ply->GetVelocity());
+			packet.Write(ply->GetOrientation());
+			packet.Write(ply->GetEyeOrientation());
+
+			packet.reliability = UNRELIABLE_SEQUENCED;
+			packet.priority = LOW_PRIORITY;
+			network->Broadcast(packet, ply->GetGUID());
+		}
+
 		// TEMPORARY
 		static f32 t = 0;
 		mNeigh->rotation = glm::angleAxis<f32>((t += 0.01f), vec3{.707f, 0, .707f});
@@ -109,7 +125,7 @@ void Server::Run() {
 		SendNeighborhoodTransform(mNeigh);
 		// TEMPORARY
 
-		std::this_thread::sleep_for(milliseconds{10});
+		std::this_thread::sleep_for(milliseconds{50});
 	}
 }
 
@@ -118,7 +134,10 @@ void Server::Run() {
 void Server::OnPlayerConnect(NetworkGUID guid) {
 	u16 playerID = ++playerIDCount;
 	guidToPlayerID[guid] = playerID;
-	playerManager->AddPlayer(std::make_shared<ServerPlayer>(), playerID);
+	auto player = std::make_shared<ServerPlayer>();
+	player->guid = guid;
+
+	playerManager->AddPlayer(player, playerID);
 
 	auto sa = network->peer->GetSystemAddressFromGuid(guid);
 	logger << "Client " << playerID << " connected [" << sa.ToString() << "]";
@@ -126,7 +145,18 @@ void Server::OnPlayerConnect(NetworkGUID guid) {
 	Packet packet;
 	packet.WriteType(PacketType::RemoteJoin);
 	packet.Write(playerID);
+	packet.Write<u8>(0);
 	network->Broadcast(packet, guid);
+
+	for(auto& ply: playerManager->players) {
+		if(ply->playerID == playerID) continue;
+
+		packet.Reset();
+		packet.WriteType(PacketType::RemoteJoin);
+		packet.Write(ply->playerID);
+		packet.Write<u8>(1);
+		network->Send(packet, guid);
+	}
 
 	for(auto& chunk: chunkManager->chunks) {
 		SendNewChunk(chunk, guid);
@@ -148,12 +178,15 @@ void Server::OnPlayerDisonnect(NetworkGUID guid) {
 	auto playerID = guidToPlayerID[guid];
 	if(!playerID) return;
 
-	logger << "Client " << playerID << " disconnected";
+	playerManager->RemovePlayer(playerID);
 
 	Packet packet;
 	packet.WriteType(PacketType::RemoteLeave);
 	packet.Write(playerID);
+	packet.Write<u8>(0);
 	network->Broadcast(packet, guid);
+
+	logger << "Client " << playerID << " disconnected";
 }
 
 void Server::OnPlayerLostConnection(NetworkGUID guid) {
@@ -161,9 +194,12 @@ void Server::OnPlayerLostConnection(NetworkGUID guid) {
 	auto playerID = guidToPlayerID[guid];
 	if(!playerID) return;
 
+	playerManager->RemovePlayer(playerID);
+
 	Packet packet;
 	packet.WriteType(PacketType::RemoteLeave);
 	packet.Write(playerID);
+	packet.Write<u8>(1);
 
 	logger << "Client " << playerID << " lost connection";
 }
@@ -176,23 +212,18 @@ void Server::OnPlayerStateUpdate(Packet& p) {
 	if(!player) return;
 
 	vec3 pos, vel;
-	quat ori;
+	quat ori, eyeOri;
 
 	p.Read(pos);
 	p.Read(vel);
 	p.Read(ori);
+	p.Read(eyeOri);
+
+	// Save new player state 
 	player->SetPosition(pos);
 	player->SetVelocity(vel);
 	player->SetOrientation(ori);
-
-	// Copy packet and forward to everyone else
-	Packet np;
-	np.WriteType(PacketType::UpdatePlayerState);
-	np.Write<u16>(playerID);
-	np.Write(pos);
-	np.Write(vel);
-	np.Write(ori);
-	network->Broadcast(np, p.fromGUID);
+	player->SetEyeOrientation(eyeOri);
 }
 
 void Server::OnSetBlock(Packet& p) {
@@ -255,6 +286,8 @@ void Server::OnSetBlock(Packet& p) {
 	}
 
 	// Packet needs to be copied because vxPos and chunkID can change
+	// TODO: Instead of sending packets immediately, record into buffer and send 
+	//	block updates in bulk
 	Packet np;
 	np.WriteType(PacketType::SetBlock);
 	np.Write(chunkID);
@@ -396,6 +429,7 @@ void Server::SendNeighborhoodTransform(std::shared_ptr<ChunkNeighborhood> neigh,
 	p.Write<u16>(neigh->neighborhoodID);
 	p.Write(neigh->position);
 	p.Write(neigh->rotation);
+	// TODO: Neighborhood velocities
 
 	network->Send(p, guid);
 }

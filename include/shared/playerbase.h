@@ -2,8 +2,11 @@
 #define PLAYERBASE_H
 
 #include "common.h"
+#include "network.h"
 
 struct PlayerBase {
+	static constexpr f32 PlayerHeight = 1.5f;
+
 	u16 playerID;
 
 	virtual void Update() {}
@@ -15,6 +18,8 @@ struct PlayerBase {
 
 	virtual vec3 GetEyePosition() { return vec3{0}; }
 	virtual quat GetEyeOrientation() { return quat{0,0,0,1}; }
+
+	virtual NetworkGUID GetGUID() { return RakNet::UNASSIGNED_RAKNET_GUID; }
 
 	virtual void SetPosition(vec3) {}
 	virtual void SetVelocity(vec3) {}

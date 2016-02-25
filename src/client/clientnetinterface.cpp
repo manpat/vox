@@ -30,18 +30,32 @@ void ClientNetInterface::Update(std::shared_ptr<Network> net) {
 		switch(type) {
 			case PacketType::RemoteJoin: {
 				u16 playerID;
-				packet.Read<u16>(playerID);
+				u8 joinType;
+				packet.Read(playerID);
+				packet.Read(joinType);
 
 				auto pmgr = PlayerManager::Get();
-				pmgr->AddPlayer(std::make_shared<NetPlayer>(), playerID);
+				if(!pmgr->GetPlayer(playerID))
+					pmgr->AddPlayer(std::make_shared<NetPlayer>(), playerID);
+
+				if(!joinType)
+					logger << "Player " << playerID << " joined";
+
 			} break;
 
 			case PacketType::RemoteLeave: {
 				u16 playerID;
-				packet.Read<u16>(playerID);
+				u8 reason;
+				packet.Read(playerID);
+				packet.Read(reason);
 
 				auto pmgr = PlayerManager::Get();
 				pmgr->RemovePlayer(playerID);
+
+				if(!reason)
+					logger << "Player " << playerID << " disconnected";
+				else
+					logger << "Player " << playerID << " lost connection";
 			} break;
 
 			case PacketType::UpdatePlayerState: OnUpdatePlayerState(packet); break;
@@ -57,13 +71,14 @@ void ClientNetInterface::Update(std::shared_ptr<Network> net) {
 	}
 }
 
-void ClientNetInterface::UpdatePlayerState(vec3 p, vec3 v, quat o) {
+void ClientNetInterface::UpdatePlayerState(vec3 p, vec3 v, quat o, quat e) {
 	Packet packet;
 	packet.WriteType(PacketType::UpdatePlayerState);
 	// This is a fairly large packet, optimisation warranted 
-	packet.Write<vec3>(p);
-	packet.Write<vec3>(v);
+	packet.Write(p);
+	packet.Write(v);
 	packet.Write(o);
+	packet.Write(e);
 
 	packet.reliability = UNRELIABLE_SEQUENCED;
 	packet.priority = MEDIUM_PRIORITY;
@@ -125,24 +140,23 @@ void ClientNetInterface::RequestRefreshChunks() {
 */
 void OnUpdatePlayerState(Packet& packet) {
 	vec3 pos, vel;
-	quat ori;
+	quat ori, eye;
 	u16 playerID;
 
 	packet.Read<u16>(playerID);
 	packet.Read(pos);
 	packet.Read(vel);
 	packet.Read(ori);
+	packet.Read(eye);
 
 	auto pmgr = PlayerManager::Get();
 	auto player = pmgr->GetPlayer(playerID);
-	if(!player) {
-		player = std::make_shared<NetPlayer>();
-		pmgr->AddPlayer(player, playerID);
-	}
+	if(!player) return;
 
 	player->SetPosition(pos);
 	player->SetVelocity(vel);
 	player->SetOrientation(ori);
+	player->SetEyeOrientation(eye);
 }
 
 void OnNewChunk(Packet& packet) {

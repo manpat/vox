@@ -8,9 +8,10 @@
 
 static Log logger{"LocalPlayer"};
 
+// TODO: This needs to take player orientation into account
 struct PlayerMotionState : public btMotionState {
 	Camera* cam;
-	vec3 cameraOffset {0, LocalPlayer::Height/2.f, 0};
+	vec3 cameraOffset {0, PlayerBase::PlayerHeight/2.f, 0};
 
 	PlayerMotionState(Camera* c) : cam{c} {}
 
@@ -26,7 +27,7 @@ struct PlayerMotionState : public btMotionState {
 
 LocalPlayer::LocalPlayer(std::shared_ptr<Camera> c): camera{c}, noclip{false} {
 	auto ms = new PlayerMotionState{camera.get()};
-	collider = new btCapsuleShape{.5f, LocalPlayer::Height - 1.f};
+	collider = new btCapsuleShape{.5f, PlayerBase::PlayerHeight - 1.f};
 
 	btScalar mass = 10.;
 	btVector3 inertia {0,0,0};
@@ -61,13 +62,14 @@ void LocalPlayer::Update() {
 		Input::GetMapped(Input::Backward) - Input::GetMapped(Input::Forward), 0
 	};
 
-	quat forwardRot;
+	vec3 velocity {0.f};
+	quat forwardRot {1,0,0,0};
 	if(noclip){
 		forwardRot = glm::angleAxis(-camRot.y, vec3{0,1,0});
 		quat rot = forwardRot * glm::angleAxis(-camRot.x, vec3{1,0,0});
 
 		inputDir = rot * inputDir;
-		camera->position += vec3(inputDir) * Time::dt * 6.f * (1.f + Input::GetMapped(Input::Boost)*3.f);
+		camera->position += vec3(inputDir) * Time::dt * 10.f * (1.f + Input::GetMapped(Input::Boost)*6.f);
 		camera->rotation = rot;
 	}else{
 		forwardRot = glm::angleAxis(-camRot.y, vec3{0,1,0});
@@ -75,35 +77,37 @@ void LocalPlayer::Update() {
 		camera->rotation = forwardRot * glm::angleAxis(-camRot.x, vec3{1,0,0});
 		inputDir = forwardRot * inputDir;
 
-		auto vel = vec3(inputDir);
-		vel = vel * 6.f * (1.f + Input::GetMapped(Input::Boost)*3.f);
-		vel.y = bt2o(rigidbody->getLinearVelocity()).y;
+		velocity = vec3(inputDir);
+		velocity = velocity * 6.f * (1.f + Input::GetMapped(Input::Boost)*3.f);
+		velocity.y = bt2o(rigidbody->getLinearVelocity()).y;
 
 		if(Input::GetMappedDown(Input::Jump))
-			vel.y += 10.f;
+			velocity.y += 10.f;
 
-		rigidbody->setLinearVelocity(o2bt(vel));
+		rigidbody->setLinearVelocity(o2bt(velocity));
 	}
 	
 	// TODO: Limit send rate - probably doesn't need to be sent every 16ms
-	ClientNetInterface::UpdatePlayerState(camera->position, vec3{0}, camera->rotation);
+	auto eyeRot = glm::inverse(camera->rotation);
+	auto bodyPos = camera->position - vec3{0,PlayerHeight,0} * forwardRot;
+	ClientNetInterface::UpdatePlayerState(bodyPos, velocity, forwardRot, eyeRot);
 
 	camera->UpdateMatrices();
 
-	if(Input::GetKeyDown(SDLK_1)) blockType = 1;
-	if(Input::GetKeyDown(SDLK_2)) blockType = 2;
-	if(Input::GetKeyDown(SDLK_3)) blockType = 3;
-	if(Input::GetKeyDown(SDLK_4)) blockType = 4;
-	if(Input::GetKeyDown(SDLK_5)) blockType = 5;
-	if(Input::GetKeyDown(SDLK_6)) blockType = 6;
-	if(Input::GetKeyDown(SDLK_7)) blockType = 7;
-	if(Input::GetKeyDown(SDLK_8)) blockType = 8;
-	if(Input::GetKeyDown(SDLK_9)) blockType = 9;
+	if(Input::GetKeyDown('1')) blockType = 1; 
+	if(Input::GetKeyDown('2')) blockType = 2;
+	if(Input::GetKeyDown('3')) blockType = 3;
+	if(Input::GetKeyDown('4')) blockType = 4;
+	if(Input::GetKeyDown('5')) blockType = 5;
+	if(Input::GetKeyDown('6')) blockType = 6;
+	if(Input::GetKeyDown('7')) blockType = 7;
+	if(Input::GetKeyDown('8')) blockType = 8;
+	if(Input::GetKeyDown('9')) blockType = 9;
 
-	if(Input::GetKeyDown(SDLK_0)) blockType = 0;
+	if(Input::GetKeyDown('0')) blockType = 0;
 
-	if(Input::GetKeyDown(SDLK_q)) blockRot = (blockRot+1)&3;
-	if(Input::GetKeyDown(SDLK_e)) blockRot = (blockRot-1)&3;
+	if(Input::GetKeyDown('[')) blockRot = (blockRot-1)&3;
+	if(Input::GetKeyDown(']')) blockRot = (blockRot+1)&3;
 
 	if(Input::GetButtonDown(Input::MouseLeft) || Input::GetButtonDown(Input::MouseRight)) {
 		auto raycastResult = Physics::Raycast(
@@ -137,9 +141,9 @@ void LocalPlayer::Update() {
 						// Otherwise, rotate based on normal such that
 						//	 the north faces -normal
 						
-						auto chnkFwd = chnk->rotation * vec3{0,0,-1};
 						auto chnkUp = chnk->rotation * vec3{0,1,0};
 						auto chnkRgt = chnk->rotation * vec3{1,0,0};
+						auto chnkFwd = chnk->rotation * vec3{0,0,-1};
 						auto plyFwd = camera->rotation * vec3{0,0,-1};
 
 						bool upPerpendicular = glm::abs(glm::dot(normal, chnkUp)) > 0.707f;

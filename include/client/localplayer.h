@@ -1,9 +1,9 @@
 #ifndef LOCALPLAYER_H
 #define LOCALPLAYER_H
 
-#include "shared/common.h"
-#include "shared/physics.h"
-#include "shared/playerbase.h"
+#include "common.h"
+#include "physics.h"
+#include "playerbase.h"
 
 struct Camera;
 
@@ -11,8 +11,6 @@ struct Camera;
 // TODO: Fill in base methods
 
 struct LocalPlayer : PlayerBase {
-	static constexpr f32 Height = 1.5f;
-
 	Collider* collider;
 	RigidBody* rigidbody;
 	std::shared_ptr<Camera> camera;

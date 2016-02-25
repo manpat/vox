@@ -7,7 +7,7 @@
 
 static Log logger{"Chunk"};
 
-Chunk::Chunk(u32 w, u32 h, u32 d) 
+Chunk::Chunk(u8 w, u8 h, u8 d) 
 	: width{w}, height{h}, depth{d} {
 
 	chunkID = 0;
@@ -69,7 +69,7 @@ Chunk::~Chunk() {
 	delete rigidbody;
 	rigidbody = nullptr;
 
-	for(u32 i = 0; i < width*depth*height; i++) {
+	for(u32 i = 0; i < (u32)width*depth*height; i++) {
 		if(blocks[i]) {
 			delete blocks[i];
 		}
@@ -196,7 +196,7 @@ void Chunk::UpdateVoxelData() {
 void Chunk::UpdateBlocks() {
 	// TODO: If this ever becomes a problem, dynamic blocks
 	//	could be stored in another list
-	for(u32 i = 0; i < width*depth*height; i++) {
+	for(u32 i = 0; i < (u32)width*depth*height; i++) {
 		auto block = blocks[i];
 		if(!block) continue;
 
@@ -208,7 +208,7 @@ void Chunk::UpdateBlocks() {
 void Chunk::PostRender() {
 	// TODO: If this ever becomes a problem, dynamic blocks
 	//	could be stored in another list
-	for(u32 i = 0; i < width*depth*height; i++) {
+	for(u32 i = 0; i < (u32)width*depth*height; i++) {
 		auto block = blocks[i];
 		if(!block) continue;
 

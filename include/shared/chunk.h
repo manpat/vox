@@ -20,21 +20,20 @@ struct Chunk {
 	u8* rotationData;
 	u8* occlusionData; // NOTE: Occlusion data not needed on server side
 	
-	u16 chunkID;
-	u32 width, height, depth;
 	u32 numQuads;
+	u16 chunkID;
+	u8 width, height, depth;
 	bool voxelsDirty;
 	bool blocksDirty;
 
 	vec3 position;
 	quat rotation;
-	// mat4 modelMatrix;
 
 	std::weak_ptr<Chunk> self;
 	std::weak_ptr<ChunkNeighborhood> neighborhood;
 	ivec3 positionInNeighborhood; // Multiple of {width,height,depth} in voxelspace
 
-	Chunk(u32, u32, u32);
+	Chunk(u8, u8, u8);
 	~Chunk();
 
 	// NOTE: GenerateMesh modifies the state of ChunkManager

@@ -72,7 +72,7 @@ run: build
 	@echo "-- Running --"
 	@gnome-terminal --geometry=120x24 -e "./server" &
 	@./client &
-	# @./client &
+	@./client &
 
 	@xdotool search --sync --name "^Vox$$" windowactivate
 

@@ -10,10 +10,11 @@
 namespace PacketType {
 	enum {
 		// [S->C] Notify players that another has joined
+		// PlayerID, u8 type/reason
 		RemoteJoin = ID_USER_PACKET_ENUM,
 		RemoteLeave,
 
-		// [S<>C] Encodes position, velocity, orientation
+		// [S<>C] Encodes position, velocity, orientation, eyeOrientation
 		UpdatePlayerState,
 
 		// [S<>C] Notify of changes to low-freq player state
@@ -24,6 +25,8 @@ namespace PacketType {
 		SetPlayerSector,
 
 		// [S<>C] Notify of a single block change
+		// If vxPosition is out of bounds, the block is created in the appropriate
+		//	position in a neighboring chunk
 		// ChunkID, vx position, blockID:14, orientation:2
 		SetBlock,
 
