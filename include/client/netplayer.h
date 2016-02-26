@@ -8,9 +8,19 @@
 struct NetPlayer : PlayerBase {
 	quat orientation;
 	quat eyeOrientation;
+	quat realOri;
+	quat realEyeOri;
+
+	vec3 realPosition;
 	vec3 position;
+	vec3 velocity;
 	u8 sector;
 
+	f32 timeSinceUpdate;
+
+	NetPlayer();
+
+	void Update() override;
 	void Render() override;
 
 	void SetPosition(vec3) override;
@@ -19,6 +29,7 @@ struct NetPlayer : PlayerBase {
 	void SetEyeOrientation(quat) override;
 
 	vec3 GetEyePosition() override;
+	quat GetEyeOrientation() override;
 };
 
 

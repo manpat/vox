@@ -62,6 +62,7 @@ void LocalPlayer::Update() {
 		Input::GetMapped(Input::Backward) - Input::GetMapped(Input::Forward), 0
 	};
 
+	vec3 prevVelocity = bt2o(rigidbody->getLinearVelocity());
 	vec3 velocity {0.f};
 	quat forwardRot {1,0,0,0};
 	if(noclip){
@@ -69,7 +70,9 @@ void LocalPlayer::Update() {
 		quat rot = forwardRot * glm::angleAxis(-camRot.x, vec3{1,0,0});
 
 		inputDir = rot * inputDir;
-		camera->position += vec3(inputDir) * Time::dt * 10.f * (1.f + Input::GetMapped(Input::Boost)*6.f);
+		velocity = vec3(inputDir) * 10.f * (1.f + Input::GetMapped(Input::Boost)*6.f);
+		prevVelocity = velocity;
+		camera->position += velocity * Time::dt;
 		camera->rotation = rot;
 	}else{
 		forwardRot = glm::angleAxis(-camRot.y, vec3{0,1,0});
@@ -79,7 +82,7 @@ void LocalPlayer::Update() {
 
 		velocity = vec3(inputDir);
 		velocity = velocity * 6.f * (1.f + Input::GetMapped(Input::Boost)*3.f);
-		velocity.y = bt2o(rigidbody->getLinearVelocity()).y;
+		velocity.y = prevVelocity.y;
 
 		if(Input::GetMappedDown(Input::Jump))
 			velocity.y += 10.f;
@@ -90,7 +93,7 @@ void LocalPlayer::Update() {
 	// TODO: Limit send rate - probably doesn't need to be sent every 16ms
 	auto eyeRot = glm::inverse(camera->rotation);
 	auto bodyPos = camera->position - vec3{0,PlayerHeight,0} * forwardRot;
-	ClientNetInterface::UpdatePlayerState(bodyPos, velocity, forwardRot, eyeRot);
+	ClientNetInterface::UpdatePlayerState(bodyPos, prevVelocity, forwardRot, eyeRot);
 
 	camera->UpdateMatrices();
 

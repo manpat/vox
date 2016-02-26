@@ -104,7 +104,7 @@ void Client::Init() {
 
 	if(!network->isConnected) throw "Connection failed";
 
-	camera->position = vec3{2.5, 10, 2.5};
+	camera->position = vec3{2.5, 0, 2.5};
 	player = std::make_shared<LocalPlayer>(camera);
 	playerManager = PlayerManager::Get();
 	playerManager->AddPlayer(player, 0);

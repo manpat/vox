@@ -52,7 +52,6 @@ void Server::Run() {
 	auto mNeigh = chunkManager->CreateNeighborhood();
 	mNeigh->neighborhoodID = ++neighborhoodIDCount;
 	mNeigh->position = vec3{0, 0, 0};
-	// mNeigh->rotation = quat{1,0,0,0};
 	mNeigh->rotation = glm::angleAxis<f32>(PI/4.f, vec3{0, 1, 0});
 	{	auto chunk = chunkManager->CreateChunk(3,3,3);
 		chunk->SetNeighborhood(mNeigh);
@@ -63,10 +62,7 @@ void Server::Run() {
 		for(u8 z = 0; z < 3; z++)
 			chunk->CreateBlock(ivec3{x,y,z}, 3);
 	}
-
-	mNeigh->rotation = glm::angleAxis<f32>(PI/4.f, vec3{.707f, 0, .707f});
-	mNeigh->UpdateChunkTransforms();
-
+	
 	logger << "Init";
 
 	Packet packet;
