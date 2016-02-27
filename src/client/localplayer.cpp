@@ -54,7 +54,7 @@ void LocalPlayer::Update() {
 	auto npitch = -Input::GetMouseDelta().y * 2.0 * PI * Time::dt * 7.f;
 	constexpr f32 limit = PI/2.f;
 
-	camRot.x = clamp(camRot.x + npitch, -limit, limit);
+	camRot.x = glm::clamp<f32>(camRot.x + npitch, -limit, limit);
 	camRot.y += nyaw;
 
 	vec4 inputDir {

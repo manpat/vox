@@ -27,6 +27,7 @@ struct TextMesh {
 	u32 quads = 0;
 
 	TextMesh(Font* f = nullptr) : font{f}, lineHeightMult{1.f} {}
+	~TextMesh();
 
 	void SetFont(Font*);
 	void SetText(const std::string&);

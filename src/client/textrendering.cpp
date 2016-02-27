@@ -70,9 +70,15 @@ void Font::Init(const std::string& filename) {
 Font::~Font() {
 	delete[] charData;
 	charData = nullptr;
+
+	// TODO: Delete texture
 }
 
 static Log tmLogger{"TextMesh"};
+
+TextMesh::~TextMesh() {
+	// TODO: Delete buffers
+}
 
 void TextMesh::SetFont(Font* f) {
 	font = f;

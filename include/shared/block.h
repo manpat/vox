@@ -2,6 +2,7 @@
 #define BLOCK_H
 
 #include "common.h"
+#include <array>
 
 enum class GeometryType {
 	Cube, Slope, Slab, 
@@ -55,7 +56,7 @@ struct Chunk;
 struct DynamicBlock;
 
 struct Block {
-	u16 blockID;
+	u16 blockID; // Note that this gets truncated to 14bits on transmission
 	u8 orientation; // This only needs two bits
 	// Tint?
 

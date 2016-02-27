@@ -53,11 +53,6 @@ using glm::quat;
 #define PI M_PI
 #endif
 
-template<class T, class A, class B>
-T clamp(T x, A l, B u) {
-	return std::max(std::min(x, (T)u), (T)l);
-}
-
 std::ostream& operator<<(std::ostream& o, const vec2&);
 std::ostream& operator<<(std::ostream& o, const vec3&);
 std::ostream& operator<<(std::ostream& o, const vec4&);
