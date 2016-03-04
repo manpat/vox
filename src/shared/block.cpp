@@ -2,17 +2,32 @@
 #include "blocks/basic.h"
 
 auto decoBlocks = {
-	DecoBlockRegisterer {"steel", 		GeometryType::Cube, {0,0,0,0,0,0}, true},
-	DecoBlockRegisterer {"steelslab", 	GeometryType::Slab, {0,0,0,0,0,0}, true},
+	BlockRegisterer {"steel", 		GeometryType::Cube, {0,0,0,0,0,0}, true},
+	BlockRegisterer {"steelslab", 	GeometryType::Slab, {0,0,0,0,0,0}, true},
 
-	DecoBlockRegisterer {"lightthing", 	GeometryType::Cube, {1,1,1,1,1,1}, true},
-	DecoBlockRegisterer {"ramp",		GeometryType::Slope,{0,0,0,0,4,0}, true},
-	DecoBlockRegisterer {"pole",		GeometryType::Cross,{2,2,2,2,2,2}, false},
+	BlockRegisterer {"lightthing", 	GeometryType::Cube, {1,1,1,1,1,1}, true},
+	BlockRegisterer {"ramp",		GeometryType::Slope,{0,0,0,0,4,0}, true},
+	BlockRegisterer {"pole",		GeometryType::Cross,{2,2,2,2,2,2}, false},
 };
 
 // BlockRegisterer<ComputerBlock> computerBlock;
 // BlockRegisterer<TextBlock> textBlock;
-BlockRegisterer<TestDynamicBlock> testDynamicBlock;
+DynamicBlockRegisterer<TestDynamicBlock> testDynamicBlock;
+
+
+void BlockFactory::Create(Block* bl) {
+	if(!bl) return;
+
+	bl->dynamic = nullptr;
+	bl->blockID = blockID;
+	bl->orientation = 0;
+}
+
+void BlockFactory::Destroy(Block* bl) {
+	if(!bl) return;
+	bl->blockID = 0;
+}
+
 
 BlockRegistry* BlockRegistry::Get() {
 	static BlockRegistry blockRegistry;
@@ -44,9 +59,7 @@ bool BlockRegistry::IsValidID(u16 blockID) {
 
 
 DynamicBlock* Block::AsDynamic() {
-	auto info = GetInfo();
-	if(!info || !info->dynamic) return nullptr;
-	return static_cast<DynamicBlock*>(this);
+	return dynamic;
 }
 
 BlockFactory* Block::GetFactory() {
@@ -63,9 +76,14 @@ BlockInfo* Block::GetInfo() {
 	return nullptr;
 }
 
+bool Block::InUse() {
+	// blockID 0 is invalid
+	return blockID > 0;
+}
+
 // TODO: Nope. Not much need for this
 mat4 DynamicBlock::GetOrientationMat() {
-	return glm::rotate<f32>(-PI/2.f*orientation, vec3{0,1,0});
+	return glm::rotate<f32>(-PI/2.f*block->orientation, vec3{0,1,0});
 }
 
 vec3 DynamicBlock::GetRelativeCenter() {

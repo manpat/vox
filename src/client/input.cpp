@@ -68,7 +68,7 @@ void Input::Update(SDL_Window* window){
 	}
 }
 
-void Input::EndFrame(){
+void Input::ClearFrameState(){
 	// Clear all ChangedThisFrameFlag's from keyStates
 	for(auto& kv: keyStates){
 		kv.second &= ~Input::ChangedThisFrameFlag;

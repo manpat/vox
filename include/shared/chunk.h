@@ -14,7 +14,7 @@ struct Chunk {
 	RigidBody* rigidbody;
 	Collider* collider;
 
-	Block** blocks;
+	Block* blocks;
 
 	u8* geometryData;
 	u8* rotationData;

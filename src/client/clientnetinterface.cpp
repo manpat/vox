@@ -276,7 +276,7 @@ void OnChunkDownload(Packet& p) {
 
 		if(++z >= d) {
 			if(++y >= h) {
-				++x; // No check because it should never happen
+				++x; 
 				y = 0;
 			}
 			z = 0;

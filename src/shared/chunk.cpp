@@ -17,13 +17,13 @@ Chunk::Chunk(u8 w, u8 h, u8 d)
 	rotationData = new u8[size];
 	occlusionData = new u8[size];
 
-	blocks = new Block*[width*height*depth];
+	blocks = new Block[width*height*depth];
 	
 	memset(geometryData, 0, size);
 	memset(rotationData, 0, size);
 	memset(occlusionData, 255, size);
 
-	memset(blocks, 0, width*height*depth * sizeof(Block*));
+	memset(blocks, 0, width*height*depth * sizeof(Block));
 
 	numQuads = 0;
 	blocksDirty = false;
@@ -70,8 +70,10 @@ Chunk::~Chunk() {
 	rigidbody = nullptr;
 
 	for(u32 i = 0; i < (u32)width*depth*height; i++) {
-		if(blocks[i]) {
-			delete blocks[i];
+		auto block = &blocks[i];
+		if(block->InUse()) {
+			if(auto factory = block->GetFactory())
+				factory->Destroy(block);
 		}
 	}
 
@@ -171,9 +173,9 @@ void Chunk::UpdateVoxelData() {
 	for(u32 y = 0; y < height; y++)
 	for(u32 z = 0; z < depth; z++) {
 		auto idx = 1 + z + (y+1)*(depth+2) + (x+1)*(depth+2)*(height+2);
-		auto block = blocks[z + y*depth + x*depth*height];
+		auto block = &blocks[z + y*depth + x*depth*height];
 
-		if(!block) {
+		if(!block->InUse()) {
 			geometryData[idx] = 0;
 			occlusionData[idx] = 255;
 			continue;
@@ -197,10 +199,10 @@ void Chunk::UpdateBlocks() {
 	// TODO: If this ever becomes a problem, dynamic blocks
 	//	could be stored in another list
 	for(u32 i = 0; i < (u32)width*depth*height; i++) {
-		auto block = blocks[i];
-		if(!block) continue;
+		auto block = &blocks[i];
+		if(!block->InUse()) continue;
 
-		if(auto dyn = block->AsDynamic())
+		if(auto dyn = block->dynamic)
 			dyn->Update();
 	}
 }
@@ -209,10 +211,10 @@ void Chunk::PostRender() {
 	// TODO: If this ever becomes a problem, dynamic blocks
 	//	could be stored in another list
 	for(u32 i = 0; i < (u32)width*depth*height; i++) {
-		auto block = blocks[i];
-		if(!block) continue;
+		auto block = &blocks[i];
+		if(!block->InUse()) continue;
 
-		if(auto dyn = block->AsDynamic())
+		if(auto dyn = block->dynamic)
 			dyn->PostRender();
 	}
 }
@@ -275,27 +277,28 @@ Block* Chunk::CreateBlock(ivec3 pos, u16 id) {
 	if(!blockInfo) return nullptr;
 
 	auto factory = blockInfo->factory;
-	if(!factory) throw "Block " + std::to_string(id+1) + " missing factory";
+	if(!factory) throw "Block " + std::to_string(id) + " missing factory";
 
 	auto idx = pos.z + pos.y*depth + pos.x*depth*height;
 
 	// TODO: Is this good enough?
 	// If a block already exists destroy it
-	if(auto block = blocks[idx]) {
-		if(auto dyn = block->AsDynamic())
+	auto block = &blocks[idx];
+	if(block->InUse()) {
+		if(auto dyn = block->dynamic)
 			dyn->OnBreak();
 
-		auto factory = block->GetFactory();
-		if(factory) {
+		if(auto factory = block->GetFactory()) {
 			factory->Destroy(block);
 		}
 	}
 
-	auto block = factory->Create();
-	blocks[idx] = block;
-	block->orientation = 0;
+	// Attempt to create block in place
+	//	and return nullptr on fail
+	factory->Create(block);
+	if(!block->InUse()) return nullptr;
 
-	if(auto dyn = block->AsDynamic()) {
+	if(auto dyn = block->dynamic) {
 		dyn->x = pos.x;
 		dyn->y = pos.y;
 		dyn->z = pos.z;
@@ -312,11 +315,11 @@ void Chunk::DestroyBlock(ivec3 pos) {
 	if(!InBounds(pos)) return;
 
 	auto idx = pos.z + pos.y*depth + pos.x*depth*height;
-	auto& block = blocks[idx];
+	auto block = &blocks[idx];
 
 	// TODO: Some of this should probably be deferred
-	if(block) {
-		if(auto dyn = block->AsDynamic())
+	if(block->InUse()) {
+		if(auto dyn = block->dynamic)
 			dyn->OnBreak();
 
 		auto factory = block->GetFactory();
@@ -325,20 +328,19 @@ void Chunk::DestroyBlock(ivec3 pos) {
 		}else{
 			auto bi = block->GetInfo();
 			logger << "Tried to destroy block with no factory!";
-			logger << (bi? bi->name : "<null blockinfo>");
+			logger << "BlockID: " << block->blockID;
+			logger << "BlockName: " << (bi? bi->name : "<null blockinfo>");
 		}
+	
+		blocksDirty = true;
 	}
-
-	block = nullptr;
-
-	blocksDirty = true;
 }
 
 Block* Chunk::GetBlock(ivec3 pos) {
 	if(!InBounds(pos)) return nullptr;
 	auto idx = pos.z + pos.y*depth + pos.x*depth*height;
 
-	return blocks[idx];
+	return &blocks[idx];
 }
 
 ivec3 Chunk::WorldToVoxelSpace(vec3 w) {

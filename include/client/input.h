@@ -85,7 +85,7 @@ public:
 
 	// Update methods
 	static void Update(SDL_Window*);
-	static void EndFrame();
+	static void ClearFrameState();
 
 	static void NotifyKeyStateChange(s32 key, bool state);
 	static void NotifyButtonStateChange(s32 key, bool state);

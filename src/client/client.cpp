@@ -181,7 +181,7 @@ void Client::Run() {
 	glGenQueries(1, &primCountQuery);
 
 	while(running) {
-		Input::EndFrame();
+		Input::ClearFrameState();
 
 		SDL_Event e;
 		while(SDL_PollEvent(&e)) {

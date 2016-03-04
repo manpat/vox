@@ -22,9 +22,9 @@ void Server::Run() {
 
 	chunkManager = ChunkManager::Get();
 	playerManager = PlayerManager::Get();
+	neighborhoodIDCount = 0;
 	playerIDCount = 0;
 	chunkIDCount = 0;
-	neighborhoodIDCount = 0;
 
 	constexpr s32 startPlaneSize = 3;
 	auto startPlaneNeigh = chunkManager->CreateNeighborhood();
@@ -114,7 +114,9 @@ void Server::Run() {
 
 		// TEMPORARY
 		static f32 t = 0;
-		mNeigh->rotation = glm::angleAxis<f32>((t += 0.01f), vec3{.707f, 0, .707f});
+		mNeigh->rotation = glm::angleAxis<f32>((t += 0.01f), glm::normalize(vec3{1,0,1}));
+
+		// Move rotation origin to center of chunk
 		mNeigh->position = vec3{0, -10, -20} + mNeigh->rotation * -vec3{2.5, 2.5,-2.5};
 		mNeigh->UpdateChunkTransforms();
 
@@ -373,14 +375,15 @@ void Server::SendChunkContents(std::shared_ptr<Chunk> vc, NetworkGUID guid) {
 	std::vector<u16> packetInfo(numBlocks, 0);
 
 	for(u16 i = 0; i < numBlocks; i++) {
-		auto b = blocks[i];
-		if(!b) continue;
+		auto& b = blocks[i];
+		if(!b.InUse()) continue;
 
-		auto bID = b->blockID;
-		packetInfo[i] = bID << 2 | (b->orientation & 3);
+		auto bID = b.blockID;
+		packetInfo[i] = bID << 2 | b.orientation;
 	}
 
 	// TODO: Compression could happen here
+	// A large majority of chunks will be mostly empty
 
 	Packet p;
 	p.reliability = RELIABLE_ORDERED;

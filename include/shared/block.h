@@ -10,62 +10,27 @@ enum class GeometryType {
 	// VHeight?
 };
 
+struct Chunk;
 struct Block;
 struct BlockInfo;
-
-struct BlockFactory {
-	u16 blockID;
-	virtual Block* Create() = 0;
-	virtual void Destroy(Block*) = 0;
-	virtual ~BlockFactory() {}
-};
-
-// TODO: Specialise this so non-dynamic blocks can be allocated
-//	from a pool
-template<class T>
-struct DefaultBlockFactory : BlockFactory {
-	T* Create() override {
-		auto bl = new T;
-		bl->blockID = blockID;
-		return bl;
-	}
-
-	void Destroy(Block* t) override {
-		delete static_cast<T*>(t);
-	}
-};
-
-struct BlockInfo {
-	BlockFactory* factory;
-	u16 blockID;
-	u16 voxelID;
-
-	std::string name;
-	GeometryType geometry;
-	
-	std::array<u8, 6> textures;
-	bool dynamic;
-	bool doesOcclude;
-
-	// Even with separate IDs, these blocks still need to have their textures
-	//	rotated
-	bool RequiresIDsForRotations() { return geometry == GeometryType::Slope; }
-};
-
-struct Chunk;
 struct DynamicBlock;
+struct BlockFactory;
 
 struct Block {
+	DynamicBlock* dynamic;
+
 	u16 blockID; // Note that this gets truncated to 14bits on transmission
-	u8 orientation; // This only needs two bits
+	u8 orientation : 2;
 	// Tint?
 
-	DynamicBlock* AsDynamic();
+	DynamicBlock* AsDynamic(); // TODO: This is no longer necessary
 	BlockFactory* GetFactory();
 	BlockInfo* GetInfo();
+	bool InUse();
 };
 
-struct DynamicBlock : Block {
+struct DynamicBlock {
+	Block* block;
 	Chunk* chunk;
 	u8 x,y,z;
 	
@@ -88,6 +53,52 @@ struct DynamicBlock : Block {
 	vec3 GetWorldCenter();
 };
 
+// Block factory initialises a block in place
+// Dynamic block factories will initialise
+//	and cleanup Block::dynamic
+struct BlockFactory {
+	u16 blockID;
+	virtual void Create(Block*);
+	virtual void Destroy(Block*);
+	virtual ~BlockFactory() {}
+};
+
+template<class T>
+struct DefaultDynamicBlockFactory : BlockFactory {
+	void Create(Block* bl) override {
+		if(!bl) return;
+
+		auto dyn = new T;
+		dyn->block = bl;
+
+		bl->blockID = blockID;
+		bl->orientation = 0;
+		bl->dynamic = dyn;
+	}
+
+	void Destroy(Block* bl) override {
+		if(!bl) return;
+		delete static_cast<T*>(bl->dynamic);
+	}
+};
+
+struct BlockInfo {
+	BlockFactory* factory;
+	u16 blockID;
+	u16 voxelID;
+
+	std::string name;
+	GeometryType geometry;
+	
+	std::array<u8, 6> textures;
+	bool dynamic;
+	bool doesOcclude;
+
+	// Even with separate IDs, these blocks still need to have their textures
+	//	rotated
+	bool RequiresIDsForRotations() { return geometry == GeometryType::Slope; }
+};
+
 struct BlockRegistry {
 	static constexpr u32 MaxBlockInfoCount = 512;
 
@@ -101,41 +112,17 @@ struct BlockRegistry {
 	static bool IsValidID(u16 blockID);
 };
 
-template<class B, template<class> class F = DefaultBlockFactory>
 struct BlockRegisterer {
 	BlockInfo* bi;
+	BlockFactory factory;
 
-	BlockRegisterer() {
-		bi = BlockRegistry::AllocateBlockInfo();
-
-		bi->factory = new F<B>;
-		bi->factory->blockID = bi->blockID;
-
-		B::PopulateBlockInfo(bi);
-
-		if(bi->dynamic)
-			Log("BlockRegisterer") << "Registered new dynamic block type: " << bi->name;
-		else
-			Log("BlockRegisterer") << "Registered new block type: " << bi->name;
-	}
-
-	~BlockRegisterer() { 
-		delete bi->factory;
-		bi->factory = nullptr;
-	}
-};
-
-struct DecoBlockRegisterer {
-	BlockInfo* bi;
-
-	DecoBlockRegisterer(std::string name, GeometryType geometry, 
+	BlockRegisterer(std::string name, GeometryType geometry, 
 		std::array<u8, 6> textures, bool doesOcclude) {
 
 		bi = BlockRegistry::AllocateBlockInfo();
 		
-		// TODO: Use single static pool for all deco blocks
-		bi->factory = new DefaultBlockFactory<Block>;
-		bi->factory->blockID = bi->blockID;
+		bi->factory = &factory;
+		factory.blockID = bi->blockID;
 
 		bi->name = name;
 		bi->geometry = geometry;
@@ -143,11 +130,37 @@ struct DecoBlockRegisterer {
 		bi->doesOcclude = doesOcclude;
 		bi->dynamic = false;
 
-		Log("DecoBlockRegisterer") << "Registered new block type: " << bi->name;
+		Log("BlockRegisterer") << "Registered new block type: " << bi->name;
 	}
 
-	~DecoBlockRegisterer() {
-		delete bi->factory;
+	~BlockRegisterer() {
+		// We don't want no danglin' pointers
+		// That said, bi could already be danglin'
+		bi->factory = nullptr;
+	}
+};
+
+template<class B, template<class> class F = DefaultDynamicBlockFactory>
+struct DynamicBlockRegisterer {
+	BlockInfo* bi;
+	F<B> factory;
+
+	DynamicBlockRegisterer() {
+		bi = BlockRegistry::AllocateBlockInfo();
+
+		bi->factory = &factory;
+		factory.blockID = bi->blockID;
+
+		B::PopulateBlockInfo(bi);
+
+		if(bi->dynamic)
+			Log("DynamicBlockRegisterer") << "Registered new dynamic block type: " << bi->name;
+		else
+			Log("DynamicBlockRegisterer") << "Registered new block type: " << bi->name;
+	}
+
+	~DynamicBlockRegisterer() { 
+		// delete bi->factory;
 		bi->factory = nullptr;
 	}
 };
