@@ -23,7 +23,7 @@ build:
 	@make client -j8 --silent
 
 obj: ; @mkdir obj
-obj/server obj/client obj/shared obj/client/gui: obj
+obj/server obj/client obj/shared obj/client/gui obj/server/blocks obj/client/blocks: obj
 	@echo "-- Checking build directory: $@ --"
 	@$(shell [ ! -d $@ ] && mkdir $@)
 
@@ -39,6 +39,8 @@ src/shared/block.cpp: include/shared/blocks/*.h
 	@touch src/shared/block.cpp
 
 src/client/gui/%.cpp: obj/client obj/client/gui ;
+src/client/blocks/%.cpp: obj/client obj/client/blocks ;
+src/server/blocks/%.cpp: obj/server obj/server/blocks ;
 
 src/server/%.cpp: obj/server ;
 src/shared/%.cpp: obj/shared ;

@@ -13,10 +13,9 @@ struct TestDynamicBlock : DynamicBlock {
 		bt->doesOcclude = true;
 	}
 
-	void OnMessage() override {};
-	void OnInteract() override {
-		Log("TestDynamicBlock") << "OnInteract";
-	}
+	void OnPlace() override;
+	void OnBreak() override;
+	void OnInteract() override;
 };
 
 // struct ComputerBlock : DynamicBlock {

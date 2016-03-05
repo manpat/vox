@@ -28,7 +28,7 @@ Chunk::Chunk(u8 w, u8 h, u8 d)
 
 	numQuads = 0;
 	blocksDirty = false;
-	voxelsDirty = true;
+	renderDirty = true;
 	physicsDirty = true;
 
 	position = vec3{0.f};
@@ -129,7 +129,6 @@ void Chunk::GenerateCollider(std::shared_ptr<ChunkMeshBuilder> meshBuilder) {
 }
 
 void Chunk::Update() {
-	UpdateBlocks();
 	// TODO: Check bordering voxels of neighbors and copy into margin
 	// Otherwise AO breaks
 	// Or rather notify neighbors when edges change
@@ -178,32 +177,8 @@ void Chunk::UpdateVoxelData() {
 		}
 	}
 
-	voxelsDirty = true;
+	renderDirty = true;
 	physicsDirty = true;
-}
-
-void Chunk::UpdateBlocks() {
-	// NOTE: If this ever becomes a problem, dynamic blocks
-	//	could be stored in another list
-	for(u32 i = 0; i < (u32)width*depth*height; i++) {
-		auto block = &blocks[i];
-		if(!block->IsValid()) continue;
-
-		if(auto dyn = block->dynamic)
-			dyn->Update();
-	}
-}
-
-void Chunk::PostRender() {
-	// NOTE: If this ever becomes a problem, dynamic blocks
-	//	could be stored in another list
-	for(u32 i = 0; i < (u32)width*depth*height; i++) {
-		auto block = &blocks[i];
-		if(!block->IsValid()) continue;
-
-		if(auto dyn = block->dynamic)
-			dyn->PostRender();
-	}
 }
 
 std::shared_ptr<Chunk> Chunk::GetOrCreateNeighborContaining(ivec3 vxpos) {

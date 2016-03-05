@@ -24,7 +24,7 @@ struct Chunk {
 	u16 chunkID;
 	u8 width, height, depth;
 	bool physicsDirty;
-	bool voxelsDirty;
+	bool renderDirty;
 	bool blocksDirty;
 
 	vec3 position;
@@ -39,10 +39,7 @@ struct Chunk {
 
 	void GenerateCollider(std::shared_ptr<ChunkMeshBuilder>);
 	void UpdateVoxelData();
-	void UpdateBlocks();
-
 	void Update();
-	void PostRender(); // Only called on client side
 
 	// TODO: I'm not sure I like this
 	std::shared_ptr<Chunk> GetOrCreateNeighborContaining(ivec3 position);

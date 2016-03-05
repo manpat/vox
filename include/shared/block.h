@@ -37,14 +37,6 @@ struct DynamicBlock {
 	
 	virtual ~DynamicBlock() {};
 
-	// Shared
-	virtual void Update() {}
-	virtual void OnMessage() {};
-
-	// Clientside
-	virtual void PostRender() {}
-
-	// Serverside
 	virtual void OnPlace() {}
 	virtual void OnBreak() {}
 	virtual void OnInteract() {}
@@ -80,6 +72,8 @@ struct DefaultDynamicBlockFactory : BlockFactory {
 	void Destroy(Block* bl) override {
 		if(!bl) return;
 		delete static_cast<T*>(bl->dynamic);
+		bl->dynamic = nullptr;
+		bl->blockID = 0;
 	}
 };
 

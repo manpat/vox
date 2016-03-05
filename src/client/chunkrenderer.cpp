@@ -85,9 +85,9 @@ void ChunkRenderer::Render() {
 	for(auto& vc: chunkManager->chunks) {
 		auto renderInfo = &chunkRenderInfoMap[vc->chunkID];
 
-		if(vc->voxelsDirty) {
+		if(vc->renderDirty) {
 			renderInfo->Update(vc);
-			vc->voxelsDirty = false;
+			vc->renderDirty = false;
 		}
 
 		if(!renderInfo->numQuads) continue;
@@ -108,10 +108,6 @@ void ChunkRenderer::Render() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindTexture(GL_TEXTURE_BUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-
-	for(auto& vc: chunkManager->chunks) {
-		vc->PostRender();
-	}
 }
 
 
