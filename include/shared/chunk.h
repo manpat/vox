@@ -37,7 +37,6 @@ struct Chunk {
 	Chunk(u8, u8, u8);
 	~Chunk();
 
-	// NOTE: GenerateCollider is no longer called so physics won't update
 	void GenerateCollider(std::shared_ptr<ChunkMeshBuilder>);
 	void UpdateVoxelData();
 	void UpdateBlocks();

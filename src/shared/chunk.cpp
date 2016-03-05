@@ -183,7 +183,7 @@ void Chunk::UpdateVoxelData() {
 }
 
 void Chunk::UpdateBlocks() {
-	// TODO: If this ever becomes a problem, dynamic blocks
+	// NOTE: If this ever becomes a problem, dynamic blocks
 	//	could be stored in another list
 	for(u32 i = 0; i < (u32)width*depth*height; i++) {
 		auto block = &blocks[i];
@@ -195,7 +195,7 @@ void Chunk::UpdateBlocks() {
 }
 
 void Chunk::PostRender() {
-	// TODO: If this ever becomes a problem, dynamic blocks
+	// NOTE: If this ever becomes a problem, dynamic blocks
 	//	could be stored in another list
 	for(u32 i = 0; i < (u32)width*depth*height; i++) {
 		auto block = &blocks[i];
