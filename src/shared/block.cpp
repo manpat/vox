@@ -10,8 +10,8 @@ auto decoBlocks = {
 	BlockRegisterer {"pole",		GeometryType::Cross,{2,2,2,2,2,2}, false},
 };
 
-// BlockRegisterer<ComputerBlock> computerBlock;
-// BlockRegisterer<TextBlock> textBlock;
+// DynamicBlockRegisterer<ComputerBlock> computerBlock;
+// DynamicBlockRegisterer<TextBlock> textBlock;
 DynamicBlockRegisterer<TestDynamicBlock> testDynamicBlock;
 
 
@@ -58,10 +58,6 @@ bool BlockRegistry::IsValidID(u16 blockID) {
 }
 
 
-DynamicBlock* Block::AsDynamic() {
-	return dynamic;
-}
-
 BlockFactory* Block::GetFactory() {
 	if(auto info = BlockRegistry::GetBlockInfo(blockID))
 		return info->factory;
@@ -76,7 +72,7 @@ BlockInfo* Block::GetInfo() {
 	return nullptr;
 }
 
-bool Block::InUse() {
+bool Block::IsValid() {
 	// blockID 0 is invalid
 	return blockID > 0;
 }

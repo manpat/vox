@@ -1,3 +1,4 @@
+#include "chunkmeshbuilder.h"
 #include "chunkmanager.h"
 #include "chunk.h"
 #include "block.h"
@@ -15,49 +16,9 @@ std::shared_ptr<ChunkManager> ChunkManager::Get() {
 }
 
 ChunkManager::ChunkManager() {
-	vertexBuildBuffer = new u8[VertexBufferSize];
-	faceBuildBuffer = new u8[FaceBufferSize];
-
-	PopulateVoxelInfo();
-
-	stbvox_init_mesh_maker(&mm);
-	auto vinput = stbvox_get_input_description(&mm);
-	memset(vinput, 0, sizeof(stbvox_input_description));
-	vinput->block_geometry = &voxelGeometryMap[0];	
+	meshBuilder = std::make_shared<ChunkMeshBuilder>();
 }
-
-ChunkManager::~ChunkManager() {
-	delete[] vertexBuildBuffer;
-	delete[] faceBuildBuffer;
-}
-
-void ChunkManager::PopulateVoxelInfo() {
-	static std::map<GeometryType, u32> voxelGeomMap {
-		{GeometryType::Cube,	STBVOX_GEOM_solid},
-		{GeometryType::Slab,	STBVOX_GEOM_slab_lower},
-		{GeometryType::Cross,	STBVOX_GEOM_crossed_pair},
-		{GeometryType::Slope,	STBVOX_GEOM_floor_slope_north_is_top},
-	};
-
-	voxelGeometryMap = {STBVOX_MAKE_GEOMETRY(STBVOX_GEOM_empty, 0, 0)};
-	u16 id = 1;
-
-	auto blockRegistry = BlockRegistry::Get();
-
-	for(u16 i = 0; i < blockRegistry->blockInfoCount; i++) {
-		auto& bt = blockRegistry->blocks[i];
-		bt.voxelID = id++;
-
-		voxelGeometryMap.push_back(STBVOX_MAKE_GEOMETRY(voxelGeomMap[bt.geometry], 0, 0));
-		if(bt.RequiresIDsForRotations()) {
-			id += 3;
-			for(u8 r = 1; r < 4; r++)
-				voxelGeometryMap.push_back(STBVOX_MAKE_GEOMETRY(voxelGeomMap[bt.geometry], r, 0));
-		}
-
-		logger << "Voxel type created for " << bt.name << ": " << bt.blockID << " -> " << bt.voxelID;
-	}
-}
+ChunkManager::~ChunkManager() {}
 
 std::shared_ptr<Chunk> ChunkManager::CreateChunk(u32 w, u32 h, u32 d) {
 	auto nchunk = std::make_shared<Chunk>(w,h,d);

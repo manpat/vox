@@ -2,8 +2,8 @@
 #define CHUNKMANAGER_H
 
 #include "common.h"
-#include "stb_voxel_render.h"
 
+struct ChunkMeshBuilder;
 struct Camera;
 struct Chunk;
 
@@ -23,23 +23,14 @@ struct ChunkNeighborhood {
 };
 
 struct ChunkManager {
-	static constexpr u32 FaceBufferSize = 4<<20; // 4MB
-	static constexpr u32 VertexBufferSize = FaceBufferSize*4; // 16MB
-
 	std::vector<std::shared_ptr<ChunkNeighborhood>> neighborhoods;
 	std::vector<std::shared_ptr<Chunk>> chunks;
-	u8* vertexBuildBuffer;
-	u8* faceBuildBuffer;
-
-	std::vector<u8> voxelGeometryMap;
-
-	stbvox_mesh_maker mm;
+	std::shared_ptr<ChunkMeshBuilder> meshBuilder;
 	
 	static std::shared_ptr<ChunkManager> Get();
 
 	ChunkManager();
 	~ChunkManager();
-	void PopulateVoxelInfo();
 
 	// NOTE: Client side created chunks WONT be syncronised unless instructed by server
 	std::shared_ptr<Chunk> CreateChunk(u32 w, u32 h, u32 d);

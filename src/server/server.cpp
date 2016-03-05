@@ -33,6 +33,9 @@ void Server::Run() {
 	startPlaneNeigh->rotation = quat{1, 0, 0, 0};
 	// startPlaneNeigh->rotation = glm::angleAxis<f32>(PI/8.f, vec3{1,0,0});
 
+	// TEMPORARY
+	// Initial chunk creation should be done on game begin,
+	// 	which isn't a concept yet.
 	for(s32 cx = -startPlaneSize; cx <= startPlaneSize; cx++)
 	for(s32 cz = -startPlaneSize; cz <= startPlaneSize; cz++){
 		auto chunk = chunkManager->CreateChunk(24,24,24);
@@ -62,6 +65,7 @@ void Server::Run() {
 		for(u8 z = 0; z < 3; z++)
 			chunk->CreateBlock(ivec3{x,y,z}, 3);
 	}
+	// TEMPORARY
 	
 	logger << "Init";
 
@@ -127,6 +131,7 @@ void Server::Run() {
 	}
 }
 
+// This is for GetSystemAddressFromGuid
 #include <raknet/RakPeerInterface.h>
 
 void Server::OnPlayerConnect(NetworkGUID guid) {
@@ -140,12 +145,14 @@ void Server::OnPlayerConnect(NetworkGUID guid) {
 	auto sa = network->peer->GetSystemAddressFromGuid(guid);
 	logger << "Client " << playerID << " connected [" << sa.ToString() << "]";
 
+	// Notify players of a new player
 	Packet packet;
 	packet.WriteType(PacketType::RemoteJoin);
 	packet.Write(playerID);
 	packet.Write<u8>(0);
 	network->Broadcast(packet, guid);
 
+	// Inform new player of existing players
 	for(auto& ply: playerManager->players) {
 		if(ply->playerID == playerID) continue;
 
@@ -156,18 +163,23 @@ void Server::OnPlayerConnect(NetworkGUID guid) {
 		network->Send(packet, guid);
 	}
 
+	// Inform player of what chunks exist
+	// TODO: Limit this to sector/range; be smarter
 	for(auto& chunk: chunkManager->chunks) {
 		SendNewChunk(chunk, guid);
 	}
 
+	// Notify player of actual neighborhood transforms
+	for(auto& neigh: chunkManager->neighborhoods){
+		SendNeighborhoodTransform(neigh, guid);
+	}
+
+	// Send the contents of the just sent chunks to player
+	// TODO: Same as before, be smarter
 	// NOTE: If a ChunkDownload packet arrives before its corresponding
 	//	NewChunk packet, it will be discarded on the client side
 	for(auto& chunk: chunkManager->chunks){
 		SendChunkContents(chunk, guid);
-	}
-
-	for(auto& neigh: chunkManager->neighborhoods){
-		SendNeighborhoodTransform(neigh, guid);
 	}
 }
 
@@ -178,6 +190,7 @@ void Server::OnPlayerDisonnect(NetworkGUID guid) {
 
 	playerManager->RemovePlayer(playerID);
 
+	// Inform players of player disconnect
 	Packet packet;
 	packet.WriteType(PacketType::RemoteLeave);
 	packet.Write(playerID);
@@ -194,6 +207,7 @@ void Server::OnPlayerLostConnection(NetworkGUID guid) {
 
 	playerManager->RemovePlayer(playerID);
 
+	// Inform players of player disconnect
 	Packet packet;
 	packet.WriteType(PacketType::RemoteLeave);
 	packet.Write(playerID);
@@ -242,7 +256,11 @@ void Server::OnSetBlock(Packet& p) {
 		return;
 	}
 
-	if(!ch->InBounds(vxPos)) {
+	// If the client tries to create a block outside 
+	//	the boundary of a chunk
+	if(blockType && !ch->InBounds(vxPos)) {
+		// Check if this chunk is part of a neighborhood
+		//	and if not, create one 
 		auto neigh = ch->neighborhood.lock();
 		if(!neigh) {
 			neigh = chunkManager->CreateNeighborhood();
@@ -251,6 +269,8 @@ void Server::OnSetBlock(Packet& p) {
 			SendSetNeighborhood(ch);
 		}
 
+		// Try to get or create a neighboring chunk 
+		//	containing the requested block
 		auto nchunk = ch->GetOrCreateNeighborContaining(vxPos);
 		if(!nchunk) {
 			logger << "Neighbor chunk creation failed!";
@@ -263,6 +283,8 @@ void Server::OnSetBlock(Packet& p) {
 			SendNewChunk(nchunk);
 		}
 
+		// Get the new position of the block relative
+		//	to the new chunk
 		vec3 world = ch->VoxelToWorldSpace(vxPos);
 		vxPos = nchunk->WorldToVoxelSpace(world);
 
@@ -270,6 +292,7 @@ void Server::OnSetBlock(Packet& p) {
 		chunkID = nchunk->chunkID;
 	}
 
+	// blockType 0 is invalid, so destroy the block at vxPos
 	if(!blockType) {
 		ch->DestroyBlock(vxPos);
 
@@ -283,6 +306,7 @@ void Server::OnSetBlock(Packet& p) {
 		}
 	}
 
+	// Notify all players of block change.
 	// Packet needs to be copied because vxPos and chunkID can change
 	// TODO: Instead of sending packets immediately, record into buffer and send 
 	//	block updates in bulk
@@ -294,7 +318,6 @@ void Server::OnSetBlock(Packet& p) {
 
 	np.reliability = RELIABLE_ORDERED;
 
-	// Send to all including sender
 	network->Broadcast(np);
 }
 
@@ -314,9 +337,10 @@ void Server::OnInteract(Packet& p) {
 	auto blk = ch->GetBlock(vxPos);
 	if(!blk) {
 		logger << "Player trying to interact with non-existent block";
+		return;
 	}
 
-	if(auto dyn = blk->AsDynamic())
+	if(auto dyn = blk->dynamic)
 		dyn->OnInteract();
 }
 
@@ -332,6 +356,10 @@ void Server::SendNewChunk(std::shared_ptr<Chunk> vc, NetworkGUID guid) {
 	packet.Write<u8>(vc->height);
 	packet.Write<u8>(vc->depth);
 
+	// If chunk has a neighborhood send it's 
+	//	positionInNeighborhood. Chunk position and 
+	//	rotation will be calculated clientside based 
+	//	on neighborhood transform
 	if(neighID) {
 		packet.Write(vc->positionInNeighborhood);
 
@@ -376,7 +404,7 @@ void Server::SendChunkContents(std::shared_ptr<Chunk> vc, NetworkGUID guid) {
 
 	for(u16 i = 0; i < numBlocks; i++) {
 		auto& b = blocks[i];
-		if(!b.InUse()) continue;
+		if(!b.IsValid()) continue;
 
 		auto bID = b.blockID;
 		packetInfo[i] = bID << 2 | b.orientation;

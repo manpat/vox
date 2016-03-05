@@ -8,13 +8,14 @@ struct ChunkManager;
 
 struct ChunkRenderInfo {
 	u32 vertexBO, faceBO, faceTex;
+	u32 numQuads;
 
 	ChunkRenderInfo();
 	ChunkRenderInfo(ChunkRenderInfo&&);
 	ChunkRenderInfo(const ChunkRenderInfo&) = delete;
 	~ChunkRenderInfo();
 
-	// Calls Chunk::GenerateMesh()
+	// Calls Chunk::BuildMesh()
 	void Update(std::shared_ptr<Chunk>);
 };
 

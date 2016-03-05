@@ -23,10 +23,11 @@ struct Block {
 	u8 orientation : 2;
 	// Tint?
 
-	DynamicBlock* AsDynamic(); // TODO: This is no longer necessary
+	// There's a whole 5.75 bytes free here in 64bit builds
+
 	BlockFactory* GetFactory();
 	BlockInfo* GetInfo();
-	bool InUse();
+	bool IsValid();
 };
 
 struct DynamicBlock {
@@ -91,7 +92,6 @@ struct BlockInfo {
 	GeometryType geometry;
 	
 	std::array<u8, 6> textures;
-	bool dynamic;
 	bool doesOcclude;
 
 	// Even with separate IDs, these blocks still need to have their textures
@@ -128,7 +128,6 @@ struct BlockRegisterer {
 		bi->geometry = geometry;
 		bi->textures = textures;
 		bi->doesOcclude = doesOcclude;
-		bi->dynamic = false;
 
 		Log("BlockRegisterer") << "Registered new block type: " << bi->name;
 	}
@@ -152,15 +151,10 @@ struct DynamicBlockRegisterer {
 		factory.blockID = bi->blockID;
 
 		B::PopulateBlockInfo(bi);
-
-		if(bi->dynamic)
-			Log("DynamicBlockRegisterer") << "Registered new dynamic block type: " << bi->name;
-		else
-			Log("DynamicBlockRegisterer") << "Registered new block type: " << bi->name;
+		Log("DynamicBlockRegisterer") << "Registered new dynamic block type: " << bi->name;
 	}
 
-	~DynamicBlockRegisterer() { 
-		// delete bi->factory;
+	~DynamicBlockRegisterer() {
 		bi->factory = nullptr;
 	}
 };

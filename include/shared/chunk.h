@@ -5,8 +5,8 @@
 #include "physics.h"
 
 struct ChunkNeighborhood;
+struct ChunkMeshBuilder;
 struct ShaderProgram;
-struct ChunkManager;
 struct Block;
 
 // NOTE: I'm not sure about Chunk knowing about physics/numQuads
@@ -23,6 +23,7 @@ struct Chunk {
 	u32 numQuads;
 	u16 chunkID;
 	u8 width, height, depth;
+	bool physicsDirty;
 	bool voxelsDirty;
 	bool blocksDirty;
 
@@ -36,18 +37,20 @@ struct Chunk {
 	Chunk(u8, u8, u8);
 	~Chunk();
 
-	// NOTE: GenerateMesh modifies the state of ChunkManager
-	//	This is obviously bad design
-	void GenerateMesh();
+	// NOTE: GenerateCollider is no longer called so physics won't update
+	void GenerateCollider(std::shared_ptr<ChunkMeshBuilder>);
 	void UpdateVoxelData();
 	void UpdateBlocks();
 
 	void Update();
 	void PostRender(); // Only called on client side
 
+	// TODO: I'm not sure I like this
 	std::shared_ptr<Chunk> GetOrCreateNeighborContaining(ivec3 position);
 	void SetNeighborhood(std::shared_ptr<ChunkNeighborhood>);
 
+	// TODO: Methods of creating/destroying/getting blocks in neighboring chunks
+	//	would be pretty handy and would simplify calling code.
 	Block* CreateBlock(ivec3, u16);
 	void DestroyBlock(ivec3);
 	Block* GetBlock(ivec3);

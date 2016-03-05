@@ -1,3 +1,4 @@
+#include "chunkmeshbuilder.h"
 #include "chunkmanager.h"
 #include "physics.h"
 #include "block.h"
@@ -28,6 +29,7 @@ Chunk::Chunk(u8 w, u8 h, u8 d)
 	numQuads = 0;
 	blocksDirty = false;
 	voxelsDirty = true;
+	physicsDirty = true;
 
 	position = vec3{0.f};
 	rotation = quat{1,0,0,0};
@@ -71,7 +73,7 @@ Chunk::~Chunk() {
 
 	for(u32 i = 0; i < (u32)width*depth*height; i++) {
 		auto block = &blocks[i];
-		if(block->InUse()) {
+		if(block->IsValid()) {
 			if(auto factory = block->GetFactory())
 				factory->Destroy(block);
 		}
@@ -90,29 +92,7 @@ static btVector3 VoxIntToVert(u32 vert) {
 	return o2bt(offset);
 }
 
-void Chunk::GenerateMesh() {
-	auto manager = ChunkManager::Get();
-	auto mm = &manager->mm;
-
-	auto vinput = stbvox_get_input_description(mm);
-	vinput->blocktype = geometryData;
-	vinput->lighting = occlusionData;
-	vinput->rotate = rotationData;
-
-	stbvox_set_input_stride(mm, (depth+2)*(height+2), (depth+2));
-	stbvox_set_input_range(mm, 1, 1, 1, width+1, height+1, depth+1);
-	stbvox_set_default_mesh(mm, 0);
-
-	stbvox_reset_buffers(mm);
-	stbvox_set_buffer(mm, 0, 0, manager->vertexBuildBuffer, ChunkManager::VertexBufferSize);
-	stbvox_set_buffer(mm, 0, 1, manager->faceBuildBuffer, ChunkManager::FaceBufferSize);
-
-	if(!stbvox_make_mesh(mm)) {
-		// TODO: resize and try again/continue
-		// Low priority, chunks should be relatively small anyway
-		logger << "Mesh generator ran out of room";
-	}
-
+void Chunk::GenerateCollider(std::shared_ptr<ChunkMeshBuilder> meshBuilder) {
 	// If mesh is valid then collider is assumed to exist
 	// so destroy it
 	if(numQuads) {
@@ -122,12 +102,12 @@ void Chunk::GenerateMesh() {
 		collider = nullptr;
 	}
 
-	numQuads = stbvox_get_quad_count(mm, 0);
+	numQuads = meshBuilder->BuildMesh(self.lock());
 
 	// If a mesh was generated, generate a new collider
 	if(numQuads) {
 		auto trimesh = new btTriangleMesh();
-		u32* chunkVerts = (u32*)manager->vertexBuildBuffer;
+		u32* chunkVerts = (u32*)meshBuilder->vertexBuildBuffer;
 		for(u64 i = 0; i < numQuads; i++) {
 			btVector3 vs[] = {
 				VoxIntToVert(chunkVerts[i*4+0]),
@@ -153,6 +133,7 @@ void Chunk::Update() {
 	// TODO: Check bordering voxels of neighbors and copy into margin
 	// Otherwise AO breaks
 	// Or rather notify neighbors when edges change
+	// OR do AO ourself
 
 	// This could alternatively be done on a per block basis
 	//	rather than updating every voxel in the chunk
@@ -161,9 +142,14 @@ void Chunk::Update() {
 		blocksDirty = false;
 	}
 
+	if(physicsDirty) {
+		// TODO: NOT THIS
+		GenerateCollider(ChunkManager::Get()->meshBuilder);
+		physicsDirty = false;
+	}
+
 	// Update collider transform
 	btTransform worldTrans;
-	// worldTrans.setFromOpenGLMatrix(glm::value_ptr(modelMatrix));
 	worldTrans.setFromOpenGLMatrix(glm::value_ptr(glm::translate(position) * glm::mat4_cast(rotation)));
 	rigidbody->setCenterOfMassTransform(worldTrans);
 }
@@ -175,7 +161,7 @@ void Chunk::UpdateVoxelData() {
 		auto idx = 1 + z + (y+1)*(depth+2) + (x+1)*(depth+2)*(height+2);
 		auto block = &blocks[z + y*depth + x*depth*height];
 
-		if(!block->InUse()) {
+		if(!block->IsValid()) {
 			geometryData[idx] = 0;
 			occlusionData[idx] = 255;
 			continue;
@@ -193,6 +179,7 @@ void Chunk::UpdateVoxelData() {
 	}
 
 	voxelsDirty = true;
+	physicsDirty = true;
 }
 
 void Chunk::UpdateBlocks() {
@@ -200,7 +187,7 @@ void Chunk::UpdateBlocks() {
 	//	could be stored in another list
 	for(u32 i = 0; i < (u32)width*depth*height; i++) {
 		auto block = &blocks[i];
-		if(!block->InUse()) continue;
+		if(!block->IsValid()) continue;
 
 		if(auto dyn = block->dynamic)
 			dyn->Update();
@@ -212,7 +199,7 @@ void Chunk::PostRender() {
 	//	could be stored in another list
 	for(u32 i = 0; i < (u32)width*depth*height; i++) {
 		auto block = &blocks[i];
-		if(!block->InUse()) continue;
+		if(!block->IsValid()) continue;
 
 		if(auto dyn = block->dynamic)
 			dyn->PostRender();
@@ -284,7 +271,7 @@ Block* Chunk::CreateBlock(ivec3 pos, u16 id) {
 	// TODO: Is this good enough?
 	// If a block already exists destroy it
 	auto block = &blocks[idx];
-	if(block->InUse()) {
+	if(block->IsValid()) {
 		if(auto dyn = block->dynamic)
 			dyn->OnBreak();
 
@@ -296,7 +283,7 @@ Block* Chunk::CreateBlock(ivec3 pos, u16 id) {
 	// Attempt to create block in place
 	//	and return nullptr on fail
 	factory->Create(block);
-	if(!block->InUse()) return nullptr;
+	if(!block->IsValid()) return nullptr;
 
 	if(auto dyn = block->dynamic) {
 		dyn->x = pos.x;
@@ -318,7 +305,7 @@ void Chunk::DestroyBlock(ivec3 pos) {
 	auto block = &blocks[idx];
 
 	// TODO: Some of this should probably be deferred
-	if(block->InUse()) {
+	if(block->IsValid()) {
 		if(auto dyn = block->dynamic)
 			dyn->OnBreak();
 
@@ -339,8 +326,11 @@ void Chunk::DestroyBlock(ivec3 pos) {
 Block* Chunk::GetBlock(ivec3 pos) {
 	if(!InBounds(pos)) return nullptr;
 	auto idx = pos.z + pos.y*depth + pos.x*depth*height;
+	auto block = &blocks[idx];
 
-	return &blocks[idx];
+	// If a block hasn't been initialised or is empty,
+	// 	return nullptr
+	return block->IsValid() ? block : nullptr;
 }
 
 ivec3 Chunk::WorldToVoxelSpace(vec3 w) {

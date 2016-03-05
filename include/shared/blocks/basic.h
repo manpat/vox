@@ -10,7 +10,6 @@ struct TestDynamicBlock : DynamicBlock {
 		bt->name = "testdynamic";
 		bt->geometry = GeometryType::Cube;
 		bt->textures = {0,0,0,3,0,0};
-		bt->dynamic = true;
 		bt->doesOcclude = true;
 	}
 

@@ -1,3 +1,4 @@
+#include "chunkmeshbuilder.h"
 #include "texturehelpers.h"
 #include "shaderregistry.h"
 #include "chunkrenderer.h"
@@ -39,8 +40,8 @@ ChunkRenderer::ChunkRenderer() {
 		}
 	}
 
-	auto chunkManager = ChunkManager::Get();
-	auto vinput = stbvox_get_input_description(&chunkManager->mm);
+	auto meshBuilder = ChunkManager::Get()->meshBuilder;
+	auto vinput = stbvox_get_input_description(&meshBuilder->mm);
 	vinput->block_tex1_face = (u8(*)[6]) &voxelTextures[0];
 }
 
@@ -82,28 +83,26 @@ void ChunkRenderer::Render() {
 	}
 	
 	for(auto& vc: chunkManager->chunks) {
-		auto infoMap = &chunkRenderInfoMap[vc->chunkID];
+		auto renderInfo = &chunkRenderInfoMap[vc->chunkID];
 
 		if(vc->voxelsDirty) {
-			infoMap->Update(vc);
+			renderInfo->Update(vc);
 			vc->voxelsDirty = false;
 		}
 
-		if(!vc->numQuads) continue;
+		if(!renderInfo->numQuads) continue;
 
-		QuadElementBuffer::SetNumQuads(vc->numQuads);
-
-		glBindBuffer(GL_ARRAY_BUFFER, infoMap->vertexBO);
+		glBindBuffer(GL_ARRAY_BUFFER, renderInfo->vertexBO);
 		glVertexAttribIPointer(0, 1, GL_UNSIGNED_INT, 4, nullptr);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_BUFFER, infoMap->faceTex);
+		glBindTexture(GL_TEXTURE_BUFFER, renderInfo->faceTex);
 		glUniform1i(program->GetUniform("facearray"), 0);
 
 		auto modelMatrix = glm::translate(vc->position) * glm::mat4_cast(vc->rotation);
 		glUniformMatrix4fv(program->GetUniform("model"), 1, false, glm::value_ptr(modelMatrix));
 
-		QuadElementBuffer::Draw(vc->numQuads);
+		QuadElementBuffer::Draw(renderInfo->numQuads);
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -148,19 +147,19 @@ ChunkRenderInfo::~ChunkRenderInfo() {
 }
 
 void ChunkRenderInfo::Update(std::shared_ptr<Chunk> vc) {
-	vc->GenerateMesh();
+	auto manager = ChunkManager::Get();
+	auto meshBuilder = manager->meshBuilder;
+	numQuads = meshBuilder->BuildMesh(vc);
 
 	if(!vertexBO) glGenBuffers(1, &vertexBO);
 	if(!faceBO) glGenBuffers(1, &faceBO);
 
-	auto manager = ChunkManager::Get();
-
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBO);
-	glBufferData(GL_ARRAY_BUFFER, vc->numQuads*4*sizeof(u32), manager->vertexBuildBuffer, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vc->numQuads*4*sizeof(u32), meshBuilder->vertexBuildBuffer, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glBindBuffer(GL_TEXTURE_BUFFER, faceBO);
-	glBufferData(GL_TEXTURE_BUFFER, vc->numQuads*sizeof(u32), manager->faceBuildBuffer, GL_DYNAMIC_DRAW);
+	glBufferData(GL_TEXTURE_BUFFER, vc->numQuads*sizeof(u32), meshBuilder->faceBuildBuffer, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_TEXTURE_BUFFER, 0);
 
 	if(!faceTex) {

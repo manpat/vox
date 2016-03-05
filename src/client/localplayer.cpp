@@ -132,7 +132,7 @@ void LocalPlayer::Update() {
 
 				if(!blockType) {
 					auto blk = chnk->GetBlock(vxpos);
-					if(blk && blk->AsDynamic()) {
+					if(blk && blk->dynamic) {
 						ClientNetInterface::DoInteract(chnk->chunkID, vxpos);
 					}
 				}else{

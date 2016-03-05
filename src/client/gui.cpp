@@ -71,7 +71,6 @@ void GUI::Render() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(GUIBuilder::Vertex), nullptr); // vertex
 	glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(GUIBuilder::Vertex), (void*)sizeof(GUIBuilder::Vertex::position)); // uv
 
-	QuadElementBuffer::SetNumQuads(builder.Count()/4);
 	QuadElementBuffer::Draw(builder.Count()/4);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
