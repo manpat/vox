@@ -231,14 +231,14 @@ void Chunk::SetNeighborhood(std::shared_ptr<ChunkNeighborhood> n) {
 	neighborhood = n;
 }
 
-Block* Chunk::CreateBlock(ivec3 pos, const std::string& name) {
+Block* Chunk::CreateBlock(ivec3 pos, const std::string& name, u16 playerID) {
 	if(!InBounds(pos)) return nullptr;
 	
 	auto blockID = BlockRegistry::GetBlockIDByName(name);
-	return CreateBlock(pos, blockID);
+	return CreateBlock(pos, blockID, playerID);
 }
 
-Block* Chunk::CreateBlock(ivec3 pos, u16 id) {
+Block* Chunk::CreateBlock(ivec3 pos, u16 id, u16 playerID) {
 	if(!InBounds(pos)) return nullptr;
 
 	auto blockInfo = BlockRegistry::GetBlockInfo(id);
@@ -254,7 +254,7 @@ Block* Chunk::CreateBlock(ivec3 pos, u16 id) {
 	auto block = &blocks[idx];
 	if(block->IsValid()) {
 		if(auto dyn = block->dynamic)
-			dyn->OnBreak();
+			dyn->OnBreak(playerID);
 
 		if(auto factory = block->GetFactory()) {
 			factory->Destroy(block);
@@ -272,14 +272,14 @@ Block* Chunk::CreateBlock(ivec3 pos, u16 id) {
 		dyn->z = pos.z;
 		dyn->chunk = this;
 		
-		dyn->OnPlace();
+		dyn->OnPlace(playerID);
 	}
 
 	blocksDirty = true;
 	return block;
 }
 
-void Chunk::DestroyBlock(ivec3 pos) {
+void Chunk::DestroyBlock(ivec3 pos, u16 playerID) {
 	if(!InBounds(pos)) return;
 
 	auto idx = pos.z + pos.y*depth + pos.x*depth*height;
@@ -288,7 +288,7 @@ void Chunk::DestroyBlock(ivec3 pos) {
 	// TODO: Some of this should probably be deferred
 	if(block->IsValid()) {
 		if(auto dyn = block->dynamic)
-			dyn->OnBreak();
+			dyn->OnBreak(playerID);
 
 		auto factory = block->GetFactory();
 		if(factory) {

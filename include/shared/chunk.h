@@ -47,9 +47,11 @@ struct Chunk {
 
 	// TODO: Methods of creating/destroying/getting blocks in neighboring chunks
 	//	would be pretty handy and would simplify calling code.
-	Block* CreateBlock(ivec3, u16);
-	Block* CreateBlock(ivec3, const std::string&);
-	void DestroyBlock(ivec3);
+	// NOTE: Passing playerID here weirds me out a bit. Not sure how else to do it
+	// Maybe do block callbacks at callsite
+	Block* CreateBlock(ivec3, u16, u16 playerID = 0);
+	Block* CreateBlock(ivec3, const std::string&, u16 playerID = 0);
+	void DestroyBlock(ivec3, u16 playerID = 0);
 	Block* GetBlock(ivec3);
 
 	ivec3 WorldToVoxelSpace(vec3);

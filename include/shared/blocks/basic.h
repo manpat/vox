@@ -6,9 +6,9 @@
 #include "block.h"
 
 struct TestDynamicBlock : DynamicBlock {
-	void OnPlace() override;
-	void OnBreak() override;
-	void OnInteract() override;
+	void OnPlace(u16) override;
+	void OnBreak(u16) override;
+	void OnInteract(u16) override;
 };
 
 // struct ComputerBlock : DynamicBlock {

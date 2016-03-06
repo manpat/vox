@@ -134,6 +134,7 @@ void LocalPlayer::Update() {
 					auto blk = chnk->GetBlock(vxpos);
 					if(blk && blk->dynamic) {
 						ClientNetInterface::DoInteract(chnk->chunkID, vxpos);
+						blk->dynamic->OnInteract(0); // TODO: Should this require a server message
 					}
 				}else{
 					if(Input::GetButtonDown(Input::MouseRight)){

@@ -84,16 +84,16 @@ void Server::Run() {
 			u8 type = packet.ReadType();
 
 			switch(type) {
-			case ID_NEW_INCOMING_CONNECTION: OnPlayerConnect(packet.fromGUID); break;
-			case ID_DISCONNECTION_NOTIFICATION: OnPlayerDisonnect(packet.fromGUID); break;
-			case ID_CONNECTION_LOST: OnPlayerLostConnection(packet.fromGUID); break;
+			case ID_NEW_INCOMING_CONNECTION: OnPlayerConnect(packet.guid); break;
+			case ID_DISCONNECTION_NOTIFICATION: OnPlayerDisonnect(packet.guid); break;
+			case ID_CONNECTION_LOST: OnPlayerLostConnection(packet.guid); break;
 
 			case PacketType::UpdatePlayerState: OnPlayerStateUpdate(packet); break;
 			case PacketType::SetBlock: OnSetBlock(packet); break;
 			case PacketType::PlayerInteract: OnInteract(packet); break;
 			case PacketType::ChunkDownload:
 				for(auto& chunk: chunkManager->chunks){
-					SendChunkContents(chunk, packet.fromGUID);
+					SendChunkContents(chunk, packet.guid);
 				}
 				break;
 			}
@@ -218,7 +218,7 @@ void Server::OnPlayerLostConnection(NetworkGUID guid) {
 }
 
 void Server::OnPlayerStateUpdate(Packet& p) {
-	auto playerID = guidToPlayerID[p.fromGUID];
+	auto playerID = guidToPlayerID[p.guid];
 	if(!playerID) return;
 
 	auto player = playerManager->GetPlayer(playerID);
@@ -250,6 +250,12 @@ void Server::OnSetBlock(Packet& p) {
 
 	orientation = blockType & 3;
 	blockType >>= 2;
+
+	auto playerID = guidToPlayerID[p.guid];
+	if(!playerID) {
+		logger << "Unknown player tried to set block";
+		return;
+	}
 
 	auto ch = chunkManager->GetChunk(chunkID);
 	if(!ch) {
@@ -295,10 +301,10 @@ void Server::OnSetBlock(Packet& p) {
 
 	// blockType 0 is invalid, so destroy the block at vxPos
 	if(!blockType) {
-		ch->DestroyBlock(vxPos);
+		ch->DestroyBlock(vxPos, playerID);
 
 	}else{
-		auto block = ch->CreateBlock(vxPos, blockType);
+		auto block = ch->CreateBlock(vxPos, blockType, playerID);
 		if(!block) {
 			logger << "Block creation failed for block type " << blockType;
 			return;
@@ -341,8 +347,15 @@ void Server::OnInteract(Packet& p) {
 		return;
 	}
 
-	if(auto dyn = blk->dynamic)
-		dyn->OnInteract();
+	auto playerID = guidToPlayerID[p.guid];
+	if(!playerID) {
+		logger << "Unknown player tried to interact with a block";
+		return;
+	}
+
+	if(auto dyn = blk->dynamic){
+		dyn->OnInteract(playerID);
+	}
 }
 
 void Server::SendNewChunk(std::shared_ptr<Chunk> vc, NetworkGUID guid) {
@@ -368,7 +381,6 @@ void Server::SendNewChunk(std::shared_ptr<Chunk> vc, NetworkGUID guid) {
 		packet.Write(vc->position);
 		packet.Write(vc->rotation);
 	}
-
 
 	packet.reliability = RELIABLE_ORDERED;
 	network->Send(packet, guid);

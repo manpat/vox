@@ -44,25 +44,10 @@ void Network::Connect(std::string address, u16 port) {
 	peer->Connect(address.data(), port, nullptr, 0);
 }
 
-#include <map>
-
-std::map<u32, std::string> packetNames {
-	{ID_NO_FREE_INCOMING_CONNECTIONS, "ID_NO_FREE_INCOMING_CONNECTIONS"},
-	{ID_CONNECTION_REQUEST_ACCEPTED, "ID_CONNECTION_REQUEST_ACCEPTED"},
-	{ID_DISCONNECTION_NOTIFICATION, "ID_DISCONNECTION_NOTIFICATION"},
-	{ID_NEW_INCOMING_CONNECTION, "ID_NEW_INCOMING_CONNECTION"},
-	{ID_CONNECTION_LOST, "ID_CONNECTION_LOST"},
-
-	{ID_USER_PACKET_ENUM, "ID_USER_PACKET_ENUM"},
-	{ID_USER_PACKET_ENUM+1, "ID_USER_PACKET_ENUM + 1"},
-	{ID_USER_PACKET_ENUM+2, "ID_USER_PACKET_ENUM + 2"},
-};
-
 void Network::Update() {
 	for(auto packet=peer->Receive(); packet; peer->DeallocatePacket(packet), packet=peer->Receive()) {
 		auto type = packet->data[0];
-		// logger << "Packet " << (isHosting?"srv ":"cli ") << packet->length << " " << packetNames[type];
-
+		
 		// TODO: This could be a bit more sophisticated
 		switch(type) {
 			case ID_CONNECTION_REQUEST_ACCEPTED: isConnected = true; break;
@@ -114,13 +99,13 @@ bool Network::GetPacket(Packet* p) {
 using RakNet::RakNetGUID;
 
 Packet::Packet() {}
-Packet::Packet(Packet&& o) : fromGUID{o.fromGUID} { bitstream.Write(o.bitstream); }
-Packet::Packet(u8* data, u32 len, RakNetGUID from) : bitstream{data, len, true}, fromGUID{from} {}
+Packet::Packet(Packet&& o) : guid{o.guid} { bitstream.Write(o.bitstream); }
+Packet::Packet(u8* data, u32 len, RakNetGUID from) : bitstream{data, len, true}, guid{from} {}
 
 Packet& Packet::operator= (Packet&& o) {
 	bitstream.Reset();
 	bitstream.Write(o.bitstream);
-	fromGUID = o.fromGUID;
+	guid = o.guid;
 	return *this;
 }
 

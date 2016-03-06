@@ -1,11 +1,11 @@
 #include "blocks/basic.h"
 
-void TestDynamicBlock::OnPlace(){
-	Log("TestDynamicBlock") << "OnPlace Server";
+void TestDynamicBlock::OnPlace(u16 playerID){
+	Log("TestDynamicBlock") << "OnPlace Server " << playerID;
 }
-void TestDynamicBlock::OnBreak(){
-	Log("TestDynamicBlock") << "OnBreak Server";
+void TestDynamicBlock::OnBreak(u16 playerID){
+	Log("TestDynamicBlock") << "OnBreak Server " << playerID;
 }
-void TestDynamicBlock::OnInteract(){
-	Log("TestDynamicBlock") << "OnInteract Server";
+void TestDynamicBlock::OnInteract(u16 playerID){
+	Log("TestDynamicBlock") << "OnInteract Server " << playerID;
 }

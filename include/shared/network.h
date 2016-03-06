@@ -23,7 +23,7 @@ namespace RakNet {
 
 struct Packet {
 	RakNet::BitStream bitstream;
-	NetworkGUID fromGUID;
+	NetworkGUID guid;
 	PacketPriority priority = HIGH_PRIORITY;
 	PacketReliability reliability = RELIABLE;
 

@@ -37,9 +37,9 @@ struct DynamicBlock {
 	
 	virtual ~DynamicBlock() {};
 
-	virtual void OnPlace() {}
-	virtual void OnBreak() {}
-	virtual void OnInteract() {}
+	virtual void OnPlace(u16 /*playerID*/) {}
+	virtual void OnBreak(u16 /*playerID*/) {}
+	virtual void OnInteract(u16 /*playerID*/) {}
 
 	mat4 GetOrientationMat();
 	vec3 GetRelativeCenter();
