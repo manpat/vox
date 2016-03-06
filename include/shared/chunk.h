@@ -48,6 +48,7 @@ struct Chunk {
 	// TODO: Methods of creating/destroying/getting blocks in neighboring chunks
 	//	would be pretty handy and would simplify calling code.
 	Block* CreateBlock(ivec3, u16);
+	Block* CreateBlock(ivec3, const std::string&);
 	void DestroyBlock(ivec3);
 	Block* GetBlock(ivec3);
 

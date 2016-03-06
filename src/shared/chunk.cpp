@@ -231,6 +231,12 @@ void Chunk::SetNeighborhood(std::shared_ptr<ChunkNeighborhood> n) {
 	neighborhood = n;
 }
 
+Block* Chunk::CreateBlock(ivec3 pos, const std::string& name) {
+	if(!InBounds(pos)) return nullptr;
+	
+	auto blockID = BlockRegistry::GetBlockIDByName(name);
+	return CreateBlock(pos, blockID);
+}
 
 Block* Chunk::CreateBlock(ivec3 pos, u16 id) {
 	if(!InBounds(pos)) return nullptr;

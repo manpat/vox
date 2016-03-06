@@ -6,13 +6,6 @@
 #include "block.h"
 
 struct TestDynamicBlock : DynamicBlock {
- 	static void PopulateBlockInfo(BlockInfo* bt) {
-		bt->name = "testdynamic";
-		bt->geometry = GeometryType::Cube;
-		bt->textures = {0,0,0,3,0,0};
-		bt->doesOcclude = true;
-	}
-
 	void OnPlace() override;
 	void OnBreak() override;
 	void OnInteract() override;

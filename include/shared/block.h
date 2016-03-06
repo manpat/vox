@@ -57,7 +57,7 @@ struct BlockFactory {
 };
 
 template<class T>
-struct DefaultDynamicBlockFactory : BlockFactory {
+struct DynamicBlockFactory : BlockFactory {
 	void Create(Block* bl) override {
 		if(!bl) return;
 
@@ -100,57 +100,24 @@ struct BlockRegistry {
 	u16 blockInfoCount = 0;
 
 	static BlockRegistry* Get();
-	static BlockInfo* AllocateBlockInfo();
+	static void RegisterWithFactory(std::string, GeometryType, std::array<u8, 6>, bool, BlockFactory*);
+
+	// Use these to register new block types, preferably in InitBlockInfo
+	template<class T>
+	static void Register(std::string, GeometryType, std::array<u8, 6>, bool);
+	static void Register(std::string, GeometryType, std::array<u8, 6>, bool);
+	
+	static void InitBlockInfo();
 	static BlockInfo* GetBlockInfo(u16 blockID);
+	static BlockInfo* GetBlockInfoByName(const std::string& name);
+	static u16 GetBlockIDByName(const std::string& name);
 
 	static bool IsValidID(u16 blockID);
 };
 
-struct BlockRegisterer {
-	BlockInfo* bi;
-	BlockFactory factory;
-
-	BlockRegisterer(std::string name, GeometryType geometry, 
-		std::array<u8, 6> textures, bool doesOcclude) {
-
-		bi = BlockRegistry::AllocateBlockInfo();
-		
-		bi->factory = &factory;
-		factory.blockID = bi->blockID;
-
-		bi->name = name;
-		bi->geometry = geometry;
-		bi->textures = textures;
-		bi->doesOcclude = doesOcclude;
-
-		Log("BlockRegisterer") << "Registered new block type: " << bi->name;
-	}
-
-	~BlockRegisterer() {
-		// We don't want no danglin' pointers
-		// That said, bi could already be danglin'
-		bi->factory = nullptr;
-	}
-};
-
-template<class B, template<class> class F = DefaultDynamicBlockFactory>
-struct DynamicBlockRegisterer {
-	BlockInfo* bi;
-	F<B> factory;
-
-	DynamicBlockRegisterer() {
-		bi = BlockRegistry::AllocateBlockInfo();
-
-		bi->factory = &factory;
-		factory.blockID = bi->blockID;
-
-		B::PopulateBlockInfo(bi);
-		Log("DynamicBlockRegisterer") << "Registered new dynamic block type: " << bi->name;
-	}
-
-	~DynamicBlockRegisterer() {
-		bi->factory = nullptr;
-	}
-};
+template<class T>
+void BlockRegistry::Register(std::string n, GeometryType g, std::array<u8, 6> t, bool o) {
+	RegisterWithFactory(n,g,t,o, new DynamicBlockFactory<T>);
+}
 
 #endif

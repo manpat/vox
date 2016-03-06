@@ -15,6 +15,7 @@ using namespace std::chrono;
 
 void Server::Run() {
 	Log::SetLogFile("server.out");
+	BlockRegistry::InitBlockInfo();
 
 	network = Network::Get();
 	network->Init();
@@ -45,10 +46,10 @@ void Server::Run() {
 
 		for(u32 y = 0; y < chunk->height; y++)
 		for(u32 x = 0; x < chunk->width; x++)
-			chunk->CreateBlock(ivec3{x,y,0}, 1);
+			chunk->CreateBlock(ivec3{x,y,0}, "steel");
 
 		for(u32 z = 1; z < chunk->depth; z++)
-			chunk->CreateBlock(ivec3{12,12,z}, 3);
+			chunk->CreateBlock(ivec3{12,12,z}, "lightthing");
 	}
 	startPlaneNeigh->UpdateChunkTransforms();
 
@@ -63,7 +64,7 @@ void Server::Run() {
 		for(u8 x = 0; x < 3; x++)
 		for(u8 y = 0; y < 3; y++)
 		for(u8 z = 0; z < 3; z++)
-			chunk->CreateBlock(ivec3{x,y,z}, 3);
+			chunk->CreateBlock(ivec3{x,y,z}, "lightthing");
 	}
 	// TEMPORARY
 	

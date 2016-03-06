@@ -38,6 +38,7 @@ Client::~Client() {}
 static void APIENTRY GLDebugCallback(u32, u32, u32, u32, s32, const char*, const void*);
 
 void Client::Init() {
+	Log::SetLogFile("client.out");
 	if(SDL_Init(SDL_INIT_EVERYTHING) < 0)
 		throw "SDL Init failed";
 
@@ -76,6 +77,7 @@ void Client::Init() {
 	ShaderRegistry::CreateProgram("ui", "shaders/ui.vs", "shaders/ui.fs");
 	ShaderRegistry::CreateProgram("text", "shaders/text.vs", "shaders/text.fs");
 	ShaderRegistry::CreateProgram("voxel", "shaders/voxel.vs", "shaders/voxel.fs");
+	BlockRegistry::InitBlockInfo();
 
 	Input::doCapture = true;
 	Physics::Init();
@@ -97,12 +99,15 @@ void Client::Init() {
 
 	Debug::Init();
 
+	// TEMPORARY
+	// This is obviously bad
 	for(u32 i = 0; i < 500 && !network->isConnected; i++) {
 		network->Update();
 		SDL_Delay(10);
 	}
 
 	if(!network->isConnected) throw "Connection failed";
+	// TEMPORARY
 
 	camera->position = vec3{2.5, 0, 2.5};
 	player = std::make_shared<LocalPlayer>(camera);
@@ -262,8 +267,8 @@ void Client::Run() {
 
 		glBeginQuery(GL_PRIMITIVES_GENERATED, primCountQuery);
 
-		playerManager->Render();
 		chunkRenderer->Render(); 
+		playerManager->Render();
 		overlayManager->Render();
 		gui->Render();
 

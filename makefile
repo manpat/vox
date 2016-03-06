@@ -72,11 +72,12 @@ obj/shared/%.o: src/shared/%.cpp
 
 run: build
 	@echo "-- Running --"
-	@gnome-terminal --geometry=120x24 -e "./server" &
+	@(gnome-terminal --geometry=120x24 -e "./server" 2> /dev/null) &
 	@./client &
 	@#./client &
 
-	@xdotool search --sync --name "^Vox$$" windowactivate
+	@# This is pure convenience for me
+	@timeout 5s xdotool search --sync --limit 1 --name "^Vox$$" windowactivate
 
 clean:
 	@echo "-- Cleaning --"
