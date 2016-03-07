@@ -1,4 +1,5 @@
 #include "block.h"
+#include "chunk.h"
 #include "blocks/basic.h"
 
 void BlockRegistry::InitBlockInfo() {

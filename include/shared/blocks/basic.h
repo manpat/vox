@@ -1,11 +1,14 @@
 #ifndef BL_BASIC_H
 #define BL_BASIC_H
 
+#include <array>
+
 #include "common.h"
-#include "chunk.h"
 #include "block.h"
 
 struct TestDynamicBlock : DynamicBlock {
+	u8 stateArena[64];
+
 	void OnPlace(u16) override;
 	void OnBreak(u16) override;
 	void OnInteract(u16) override;
