@@ -43,7 +43,7 @@ void ChunkManager::Update() {
 }
 
 std::shared_ptr<Chunk> ChunkManager::GetChunk(u16 id) {
-	auto it = std::find_if(chunks.begin(), chunks.end(), [id](auto& ch) {
+	auto it = std::find_if(chunks.begin(), chunks.end(), [id](const std::shared_ptr<Chunk>& ch) {
 		return id == ch->chunkID;
 	});
 
@@ -52,7 +52,7 @@ std::shared_ptr<Chunk> ChunkManager::GetChunk(u16 id) {
 }
 
 void ChunkManager::DestroyChunk(u16 id) {
-	auto it = std::find_if(chunks.begin(), chunks.end(), [id](auto& ch) {
+	auto it = std::find_if(chunks.begin(), chunks.end(), [id](const std::shared_ptr<Chunk>& ch) {
 		return id == ch->chunkID;
 	});
 
@@ -61,8 +61,9 @@ void ChunkManager::DestroyChunk(u16 id) {
 }
 
 std::shared_ptr<ChunkNeighborhood> ChunkManager::GetNeighborhood(u16 id) {
-	auto it = std::find_if(neighborhoods.begin(), neighborhoods.end(), [id](auto& ch) {
-		return id == ch->neighborhoodID;
+	auto it = std::find_if(neighborhoods.begin(), neighborhoods.end(), 
+		[id](const std::shared_ptr<ChunkNeighborhood>& ch) {
+			return id == ch->neighborhoodID;
 	});
 
 	if(it == neighborhoods.end()) return nullptr;
@@ -92,8 +93,9 @@ void ChunkNeighborhood::AddChunk(std::shared_ptr<Chunk> c) {
 }
 
 void ChunkNeighborhood::RemoveChunk(std::shared_ptr<Chunk> c) {
-	auto endIt = std::remove_if(chunks.begin(), chunks.end(), [&c](auto wn) {
-		return wn.lock() == c;
+	auto endIt = std::remove_if(chunks.begin(), chunks.end(), 
+		[&c](const std::weak_ptr<Chunk>& wn) {
+			return wn.lock() == c;
 	});
 
 	chunks.erase(endIt, chunks.end());

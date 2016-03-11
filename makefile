@@ -1,7 +1,7 @@
-GCC?= g++-5
+GCC?= g++
 
 SharedSFlags = -I. -Iinclude -Iinclude/shared -Iinclude/ext -I/usr/local/include/ -I/usr/local/include/bullet/
-SharedSFlags+= -std=c++14 -Wall -Wextra -O1 -g
+SharedSFlags+= -std=c++11 -Wall -Wextra -O1 -g
 ClientSFlags:= $(SharedSFlags) -Iinclude/client -DVOXCLIENT
 ServerSFlags:= $(SharedSFlags) -Iinclude/server -DVOXSERVER
 

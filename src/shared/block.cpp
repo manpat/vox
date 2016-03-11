@@ -65,7 +65,7 @@ BlockInfo* BlockRegistry::GetBlockInfoByName(const std::string& name) {
 	auto blockRegistry = Get();
 
 	auto end = blockRegistry->blocks.begin()+blockRegistry->blockInfoCount;
-	auto bi = std::find_if(blockRegistry->blocks.begin(), end, [&name](const auto& bi) {
+	auto bi = std::find_if(blockRegistry->blocks.begin(), end, [&name](const BlockInfo& bi) {
 		return bi.name == name;
 	});
 

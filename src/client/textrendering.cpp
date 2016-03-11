@@ -5,8 +5,8 @@
 #include <vector>
 #include <fstream>
 
-#include <locale>
-#include <codecvt>
+// #include <locale>
+// #include <codecvt>
 
 constexpr u64 TexWidth = 1024;
 constexpr u64 TexHeight = 1024;
@@ -102,9 +102,12 @@ void TextMesh::SetText(const std::string& text) {
 
 		auto& space = font->charData[0];
 
-		std::wstring_convert<std::codecvt_utf8<char32_t>,char32_t> cv;
+		// NOTE: This bit enables some unicode text rendering
+		// But it requires gcc 5 at least
+		// std::wstring_convert<std::codecvt_utf8<char32_t>,char32_t> cv;
+		// for(auto c: cv.from_bytes(text)) {
 		
-		for(auto c: cv.from_bytes(text)) {
+		for(auto c: text) {
 			switch(c) {
 			case '\n':
 				y += lineHeightMult;

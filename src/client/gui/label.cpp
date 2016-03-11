@@ -7,7 +7,7 @@
 #include "debugdraw.h"
 
 LabelElement::LabelElement() {
-	textMesh = std::make_unique<TextMesh>(Font::defaultFont);
+	textMesh = std::unique_ptr<TextMesh>(new TextMesh{Font::defaultFont});
 	// textMesh->SetText("123456789abcdef\n123456789abcdef\n123456789abcdef\n123456789abcdef");
 	textMesh->SetText("Test");
 	interactive = false;

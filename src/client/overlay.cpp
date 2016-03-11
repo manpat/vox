@@ -23,11 +23,12 @@ void OverlayManager::Update() {
 	// Release those that wish death
 	auto end = overlays.end();
 	overlays.erase(std::remove_if(overlays.begin(), end, 
-		[](const auto& wo) { auto o = wo.lock(); return !o || o->wishesDeath; }), end);
+		[](const std::weak_ptr<Overlay>& wo) { auto o = wo.lock(); return !o || o->wishesDeath; }), end);
 
 	// Higher priority renders last
-	std::sort(overlays.begin(), overlays.end(), [](const auto& a, const auto& b) {
-		return a.lock()->priority < b.lock()->priority;
+	std::sort(overlays.begin(), overlays.end(), 
+		[](const std::weak_ptr<Overlay>& a, const std::weak_ptr<Overlay>& b) {
+			return a.lock()->priority < b.lock()->priority;
 	});
 }
 

@@ -18,16 +18,18 @@ void PlayerManager::AddPlayer(std::shared_ptr<PlayerBase> p, u16 id) {
 }
 
 void PlayerManager::RemovePlayer(u16 id) {
-	auto p = std::find_if(players.begin(), players.end(), [id](auto p) {
-		return id == p->playerID;
+	auto p = std::find_if(players.begin(), players.end(), 
+		[id](const std::shared_ptr<PlayerBase>& p) {
+			return id == p->playerID;
 	});
 
 	players.erase(p);
 }
 
 std::shared_ptr<PlayerBase> PlayerManager::GetPlayer(u16 id) {
-	auto p = std::find_if(players.begin(), players.end(), [id](auto p) {
-		return id == p->playerID;
+	auto p = std::find_if(players.begin(), players.end(), 
+		[id](const std::shared_ptr<PlayerBase>& p) {
+			return id == p->playerID;
 	});
 
 	if(p == players.end()) return nullptr;

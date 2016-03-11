@@ -36,10 +36,11 @@ void GUI::Init() {
 void GUI::Update() {
 	auto end = elements.end();
 	elements.erase(std::remove_if(elements.begin(), end, 
-		[](const auto& p) {return p.expired();}), end);
+		[](const std::weak_ptr<Element>& p) {return p.expired();}), end);
 	
-	std::sort(elements.begin(), elements.end(), [](auto& a, auto& b) {
-		return a.lock()->depth < b.lock()->depth;
+	std::sort(elements.begin(), elements.end(), 
+		[](std::weak_ptr<Element>& a, std::weak_ptr<Element>& b) {
+			return a.lock()->depth < b.lock()->depth;
 	});
 
 	builder.Clear();
