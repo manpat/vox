@@ -2,8 +2,8 @@ GCC = g++-5
 
 SharedSFlags = -I. -Iinclude -Iinclude/shared -Iinclude/ext -I/usr/local/include/ -I/usr/local/include/bullet/
 SharedSFlags+= -std=c++14 -Wall -Wextra -O1 -g
-ClientSFlags:= $(SharedSFlags) -Iinclude/client
-ServerSFlags:= $(SharedSFlags) -Iinclude/server
+ClientSFlags:= $(SharedSFlags) -Iinclude/client -DVOXCLIENT
+ServerSFlags:= $(SharedSFlags) -Iinclude/server -DVOXSERVER
 
 SharedLFlags = `pkg-config --libs bullet` -lRakNetLibStatic -pthread -O1 -g
 ClientLFlags:= $(SharedLFlags) -lSDL2 -lSDL2_image -lGL

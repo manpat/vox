@@ -28,7 +28,7 @@ struct Camera {
 	f32 near, far;
 	ProjectionType projectionType;
 
-	Camera(f32 a = 4.f/3.f, f32 fs = PI/3.f, f32 n = 0.01f, f32 f = 1000.f, ProjectionType p = Perspective);
+	Camera(f32 a = 4.f/3.f, f32 fs = PI/3.f, f32 n = 0.01f, f32 f = 5000.f, ProjectionType p = Perspective);
 	Camera(const mat4&);
 
 	void UpdateMatrices();

@@ -16,8 +16,10 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#define GL_GLEXT_PROTOTYPES
-#include <SDL2/SDL_opengl.h>
+#ifdef VOXCLIENT
+#	define GL_GLEXT_PROTOTYPES
+#	include <SDL2/SDL_opengl.h>
+#endif
 
 using u8  = uint8_t;
 using u16 = uint16_t;

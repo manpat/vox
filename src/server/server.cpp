@@ -27,16 +27,15 @@ void Server::Run() {
 	playerIDCount = 0;
 	chunkIDCount = 0;
 
-	constexpr s32 startPlaneSize = 3;
+	// TEMPORARY
+	// Initial chunk creation should be done on game begin,
+	// 	which isn't a concept yet.
+	constexpr s32 startPlaneSize = 5;
 	auto startPlaneNeigh = chunkManager->CreateNeighborhood();
 	startPlaneNeigh->neighborhoodID = ++neighborhoodIDCount;
 	startPlaneNeigh->position = vec3{0, -24.f, 0};
 	startPlaneNeigh->rotation = quat{1, 0, 0, 0};
-	// startPlaneNeigh->rotation = glm::angleAxis<f32>(PI/8.f, vec3{1,0,0});
 
-	// TEMPORARY
-	// Initial chunk creation should be done on game begin,
-	// 	which isn't a concept yet.
 	for(s32 cx = -startPlaneSize; cx <= startPlaneSize; cx++)
 	for(s32 cz = -startPlaneSize; cz <= startPlaneSize; cz++){
 		auto chunk = chunkManager->CreateChunk(24,24,24);
@@ -423,11 +422,13 @@ void Server::SendChunkContents(std::shared_ptr<Chunk> vc, NetworkGUID guid) {
 		packetInfo[i] = bID << 2 | b.orientation;
 	}
 
-	// TODO: Compression could happen here
+	// TODO: Compression should happen here
 	// A large majority of chunks will be mostly empty
 
 	Packet p;
 	p.reliability = RELIABLE_ORDERED;
+
+	u32 numPackets = 0;
 
 	u16 remaining = numBlocks;
 	while(remaining >= blockLimit) {
@@ -443,6 +444,7 @@ void Server::SendChunkContents(std::shared_ptr<Chunk> vc, NetworkGUID guid) {
 			p.Write<u16>(packetInfo[i+offset]);
 
 		network->Send(p, guid);
+		numPackets++;
 
 		remaining -= blockLimit;
 	}
@@ -459,8 +461,11 @@ void Server::SendChunkContents(std::shared_ptr<Chunk> vc, NetworkGUID guid) {
 		for(u16 i = 0; i < remaining; i++)
 			p.Write<u16>(packetInfo[i+offset]);
 
+		numPackets++;
 		network->Send(p, guid);
 	}
+
+	// logger << "Sent " << numPackets << " packets";
 }
 
 void Server::SendNeighborhoodTransform(std::shared_ptr<ChunkNeighborhood> neigh, NetworkGUID guid) {
