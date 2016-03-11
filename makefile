@@ -1,4 +1,4 @@
-GCC = g++-5
+GCC?= g++-5
 
 SharedSFlags = -I. -Iinclude -Iinclude/shared -Iinclude/ext -I/usr/local/include/ -I/usr/local/include/bullet/
 SharedSFlags+= -std=c++14 -Wall -Wextra -O1 -g
